@@ -1,36 +1,59 @@
-CFILES	:= main.c
-RM		:= rm -f
-NAME	:= lem-in
-CC		:= gcc
-INCDIR	:= -I includes -I libft
+# Directories
+SRCDIR  := src
+OBJDIR  := obj
+INCDIR  := inc
+LIBDIR  := libft
 
-LIB		:= libft.a
-LIBDIR	:= libft
-LIBPATH	:= $(LIBDIR)/$(LIB)
-CFLAGS	:= -Wall -Wextra -Werror $(INCDIR) #-fsanitize=address 
+# Files
+CFILES  := $(wildcard $(SRCDIR)/*.c)
+OFILES  := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
+LIB     := libft.a
+LIBPATH := $(LIBDIR)/$(LIB)
+NAME    := lem-in
 
+# Compiler and flags
+CC      := gcc
+CFLAGS  := -Wall -Wextra -Werror -I $(INCDIR) -I $(LIBDIR)
+
+# Commands
+RM      := rm -f
+
+# Targets
 all: $(NAME)
 
-$(NAME): $(CFILES) $(LIBPATH)
-	$(CC) $(CFLAGS) $(CFILES) -o $(NAME) $(LIBPATH)
+$(NAME): $(OFILES) $(LIBPATH)
+	@$(if $(shell [ -e $(NAME) ] && find $(OFILES) $(LIBPATH) -newer $(NAME) | head -n 1),\
+		$(CC) $(CFLAGS) $(OFILES) -o $(NAME) $(LIBPATH),\
+		echo "$(NAME) is up to date.")
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 $(LIBPATH):
 	make -C $(LIBDIR)
 
 clean:
 	make -C $(LIBDIR) clean
+	$(RM) $(OFILES)
+	$(RM) -r $(OBJDIR)
 
 fclean: clean
 	$(RM) $(LIBPATH)
-	make -C $(LIBDIR) clean
+	make -C $(LIBDIR) fclean
 	$(RM) $(NAME)
 
 re: fclean all
 
 run: all
-	./lem-in
+	./$(NAME)
+
+test: all
+	cat maps/subject.map | ./$(NAME)
 
 leaks: all
-	leaks --atExit -- ./lem-in
+	leaks --atExit -- ./$(NAME)
 
-.PHONY: clean fclean all re run
+.PHONY: clean fclean all re run test leaks

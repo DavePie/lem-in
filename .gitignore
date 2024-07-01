@@ -1,3 +1,4 @@
 *.o
 lem-in
 settings.json
+*.exe

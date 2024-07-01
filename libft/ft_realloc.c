@@ -7,7 +7,10 @@ void	*ft_realloc(void *ptr, size_t old_size, size_t new_size)
 
 	new_ptr = malloc(new_size);
 	if (!new_ptr)
+	{
+		free(ptr);
 		return (NULL);
+	}
 	ft_bzero(new_ptr, new_size);
 	if (ptr)
 	{
