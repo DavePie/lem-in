@@ -88,5 +88,12 @@ uint best_paths(t_data *data, t_path **paths, uint n_new_paths, uint depth)
 
 uint better_combination(t_data *data, uint depth)
 {
-    return 0;
+    /*
+    ----
+    ----
+    ---*
+    -***
+    ****
+    */
+    return depth;
 }
