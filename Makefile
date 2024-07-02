@@ -22,9 +22,7 @@ RM      := rm -f
 all: $(NAME)
 
 $(NAME): $(OFILES) $(LIBPATH)
-	@$(if $(shell [ -e $(NAME) ] && find $(OFILES) $(LIBPATH) -newer $(NAME) | head -n 1),\
-		$(CC) $(CFLAGS) $(OFILES) -o $(NAME) $(LIBPATH),\
-		echo "$(NAME) is up to date.")
+	$(CC) $(CFLAGS) $(OFILES) -o $(NAME) $(LIBPATH)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -51,9 +49,9 @@ run: all
 	./$(NAME)
 
 test: all
-	cat maps/subject.map | ./$(NAME)
+	cat maps/subject3.map | ./$(NAME)
 
 leaks: all
-	leaks --atExit -- ./$(NAME)
+	valgrind --leak-check=full ./$(NAME)
 
 .PHONY: clean fclean all re run test leaks
