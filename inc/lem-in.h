@@ -24,5 +24,6 @@ float	htable_load(t_data *data);
 // utils
 int		error(char *msg, char *line, void *to_free);
 uint	get_next_prime(uint n);
+t_path **find_best_paths(t_data *data);
 
 #endif

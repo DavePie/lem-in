@@ -123,7 +123,9 @@ int is_link_shaped(t_data *data, char *line)
 
 	if (!room1 || !room2)
 		return error("Error: invalid link:\n", l, l);
-	return !link_rooms(room1, room2) || !link_rooms(room2, room1);
+	int a = link_rooms(room1, room2);
+	int b = link_rooms(room2, room1);
+	return !(a && b);
 }
 
 // adds a room to the data in temp_rooms

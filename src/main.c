@@ -29,6 +29,7 @@ int main()
 	printf("edges for ending room:\n");
 	for (uint i = 0; room && i < room->num_edges; i++)
 		printf("%s\n", room->edges[i]->name);
+	find_best_paths(&data);
 	// if (get_data(&data))
 	// 	return clear_data(&data);
 	// if (validate_data(&data))
