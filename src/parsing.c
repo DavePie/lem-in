@@ -37,7 +37,6 @@ int get_data(t_data *data)
 	}
 	if (modifier)
 		return error("Error: invalid command usuage:\n", line, line);
-	printf("start\n");
 	if (store_in_hash_table(data))
 		return error(NULL, NULL, NULL);
 	while (line && is_link_shaped(data, line))
@@ -124,7 +123,7 @@ int is_link_shaped(t_data *data, char *line)
 
 	if (!room1 || !room2)
 		return error("Error: invalid link:\n", l, l);
-	return !link_rooms(room1, room2);
+	return !link_rooms(room1, room2) || !link_rooms(room2, room1);
 }
 
 // adds a room to the data in temp_rooms
@@ -167,12 +166,5 @@ int link_rooms(t_room *room1, t_room *room2)
 			return 1;
 	}
 	room1->edges[room1->num_edges++] = room2;
-	if (room2->num_edges % EDGES_REALLOC == 0)
-	{
-		room2->edges = ft_realloc(room2->edges, room2->num_edges * sizeof(t_room *), (room2->num_edges + EDGES_REALLOC) * sizeof(t_room *));
-		if (!room2->edges)
-			return 1;
-	}
-	room2->edges[room2->num_edges++] = room1;
 	return 0;
 }
