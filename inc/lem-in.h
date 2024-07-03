@@ -21,10 +21,8 @@ ulong	hash(char *str);
 t_room	*htable_get(t_data *data, char *name);
 int		htable_add(t_data *data, t_room *room);
 float	htable_load(t_data *data);
-int		htable_resize(t_data *data);
 // utils
 int		error(char *msg, char *line, void *to_free);
-uint	get_num_rooms(t_data *data);
 uint	get_next_prime(uint n);
 
 #endif

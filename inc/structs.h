@@ -13,7 +13,6 @@ typedef struct  s_room
 	char			*name;
 	uint			num_edges;
 	struct s_room	**edges; // rooms connected to this room
-	struct s_room	*next; // for hash table
 }	t_room;
 
 

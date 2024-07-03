@@ -12,18 +12,6 @@ int	error(char *msg, char *line, void *to_free)
 	return 1;
 }
 
-
-// get number of rooms
-uint	get_num_rooms(t_data *data)
-{
-	uint	i = 0;
-
-	while (data->temp_rooms[i])
-		i++;
-	return i;
-}
-
-
 // get the next prime number after n
 uint	get_next_prime(uint n)
 {
