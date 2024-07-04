@@ -24,6 +24,15 @@ float	htable_load(t_data *data);
 // utils
 int		error(char *msg, char *line, void *to_free);
 uint	get_next_prime(uint n);
-t_path **find_best_paths(t_data *data);
+t_path	**find_best_paths(t_data *data);
+// debug
+void	print_room(t_room *room, int print_edges);
+void	sum_room(t_room *room);
+void	print_edges(t_room *room);
+void	sum_edges(t_room *room);
+void	print_path(t_path *path);
+void	sum_path(t_path *path);
+void	print_paths(t_data *data);
+void	print_data(t_data *data, int print_rooms, int print_edges, int print_paths);
 
 #endif

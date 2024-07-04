@@ -10,7 +10,7 @@ CFILES  := ft_isalpha.c ft_isdigit.c ft_isalnum.c ft_isascii.c ft_isprint.c ft_s
             ft_calloc.c ft_strdup.c ft_substr.c ft_strjoin.c ft_strtrim.c ft_split.c ft_itoa.c \
             ft_strmapi.c ft_striteri.c ft_putchar_fd.c ft_putstr_fd.c ft_putendl_fd.c ft_putnbr_fd.c \
             get_next_line.c get_next_line_utils.c ft_realloc.c ft_strcmp.c ft_isnumber.c ft_strndup.c \
-            ft_free_tab.c
+            ft_free_tab.c ft_putnbrendl_fd.c
 OBJECTS := $(patsubst %.c,%.o,$(CFILES))
 BOBJECTS:= $(patsubst %.c,%.o,$(BCFILES))
 LIB     := ar -rcs

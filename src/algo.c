@@ -2,29 +2,6 @@
 
 uint path_contains(t_path *path, t_room *room);
 
-void print_paths(t_data *data)
-{
-    printf("Partial paths (%d):\n", data->n_partial_paths);
-    for (uint i = 0; i < data->n_partial_paths; i++)
-    {
-        printf("%s", data->start->name);
-        for (uint j = 0; j < data->partial_paths[i]->size; j++)
-        {
-            printf("->%s", data->partial_paths[i]->rooms[j]->name);
-        }
-        printf("\n");
-    }
-    printf("Full paths:\n");
-    for (uint i = 0; i < data->n_full_paths; i++)
-    {
-        printf("%s", data->start->name);
-        for (uint j = 0; j < data->full_paths[i]->size; j++)
-        {
-            printf("->%s", data->full_paths[i]->rooms[j]->name);
-        }
-        printf("\n");
-    }
-}
 
 t_path *init_path(t_room **rooms, uint num, uint size)
 {
@@ -97,7 +74,7 @@ void extend_path(t_data *data, uint *index, uint *n)
     int replaced_original = 0;
     int add_end = 0;
 
-    printf("room %s has %d edges\n", parent->name, parent->num_edges);
+    sum_room(parent);
     for (int j = (int)n_children - 1; j >= 0; j--)
     {
         t_room *child = parent->edges[j];
@@ -166,7 +143,7 @@ t_path **find_best_paths(t_data *data)
     data->full_paths = malloc(sizeof(t_path) * data->num_rooms);
     t_room **cur = malloc(sizeof(t_room) * data->num_rooms);
     cur[0] = data->start;
-    printf("starting");
+    printf("\nstarting\n");
     uint depth = 1;
     uint layer_size = 1;
     uint n_new_paths = 0;

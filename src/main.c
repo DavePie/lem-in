@@ -21,14 +21,11 @@ int main()
 	t_room *tmp = htable_get(&data, "start");
 	printf("get test: %s\n", tmp ? tmp->name : "not found");
 
-	printf("edges for starting room:\n");
-	t_room *room = data.start;
-	for (uint i = 0; room && i < room->num_edges; i++)
-		printf("%s\n", room->edges[i]->name);
-	room = data.end;
-	printf("edges for ending room:\n");
-	for (uint i = 0; room && i < room->num_edges; i++)
-		printf("%s\n", room->edges[i]->name);
+	printf("starting room:\n");
+	print_room(data.start, 1);
+	printf("ending room:\n");
+	print_room(data.end, 1);
+
 	find_best_paths(&data);
 	// if (get_data(&data))
 	// 	return clear_data(&data);

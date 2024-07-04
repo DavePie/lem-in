@@ -10,14 +10,18 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include <unistd.h>
 
 static void	ft_recur_nbr(long n, int fd)
 {
+	int	c;
+
 	if (!n)
 		return ;
 	ft_recur_nbr((int)(n / 10), fd);
-	ft_putchar_fd((int)(n % 10) + '0', fd);
+	c = (int)(n % 10) + '0';
+	write(fd, &c, 1);
+
 }
 
 void	ft_putnbr_fd(int n, int fd)
@@ -28,10 +32,10 @@ void	ft_putnbr_fd(int n, int fd)
 	if (n < 0)
 	{
 		temp *= -1;
-		ft_putchar_fd('-', fd);
+		write(fd, "-", 1);
 	}
 	if (n == 0)
-		ft_putchar_fd('0', fd);
+		write(fd, "0", 1);
 	else
 		ft_recur_nbr(temp, fd);
 }
