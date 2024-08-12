@@ -2,3 +2,4 @@
 lem-in
 settings.json
 *.exe
+node_modules
