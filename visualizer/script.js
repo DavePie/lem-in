@@ -1,6 +1,6 @@
 const pane = new Tweakpane.Pane();
 
-// Simulation state
+// Simulation playback state 
 const sim_state = {
 	is_playing: false,
 	len: 250, // Total steps
@@ -14,6 +14,11 @@ const parameters = {
 };
 
 
+/**********************************\
+[                                  ]
+[ -- AntFarm configuration form -- ]
+[                                  ]
+\**********************************/
 // Folder for AntFarm settings
 const antFarmFolder = pane.addFolder({
 	title: 'AntFarm Settings',
@@ -35,6 +40,11 @@ antFarmFolder.addButton({ title: 'Valider AntFarm' }).on('click', () => {
 });
 
 
+/*************************************\
+[                                     ]
+[ -- Simulation configuration form -- ]
+[                                     ]
+\*************************************/
 // Folder for simulation settings
 const simulationFolder = pane.addFolder({
 	title: 'Simulation Settings',
@@ -43,11 +53,11 @@ const simulationFolder = pane.addFolder({
 // Text field for simulation insructions, deactivated while there is no valid AntFarm
 const simulationInput = simulationFolder.addInput(parameters, 'Simulation', {
 	label: 'Simulation',
-	disabled: !parameters.IsFarm,
+	disabled: !parameters.AntFarm,
 });
 // Simulation instructions validation button
 simulationFolder.addButton({ title: 'Valider Simulation' }).on('click', () => {
-	if (parameters.IsFarm) {
+	if (parameters.AntFarm) {
 		const simulationString = simulationInput.controller_.view.element.querySelector('input').value;
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 		// [ -- implement parsing for simulationString                     -- ] //
@@ -108,7 +118,7 @@ function updateInterface() {
 				if (sim_state.step < sim_state.len) {
 					sim_state.step++;
 					stepInput.refresh(); // Update the slider
-					console.log('Playing... Current step:', sim_state.step);
+					console.log('Playing, step:', sim_state.step);
 					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 					// [ -- add here simulation updating function -- ] //
 					// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
