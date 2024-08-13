@@ -2,7 +2,7 @@ const pane = new Tweakpane.Pane();
 
 // Simulation playback state 
 const sim_state = {
-	is_playing: false,
+	is_playing: true,
 	len: 250, // Total steps
 	step: 0, // Current pos
 	speed: 1, // Transition speed between cells
@@ -88,6 +88,7 @@ function updateInterface() {
 			max: sim_state.len,
 			step: 1,
 			label: 'Position',
+			disabled: sim_state.is_playing
 		});
 		// Ants speed slider (time to move from one cell to another)
 		playbackPane.addInput(sim_state, 'speed', {
@@ -141,6 +142,7 @@ function handlePlaybackAction(actionIndex, stepInput) {
 		case 1: // Play/Pause
 			sim_state.is_playing = !sim_state.is_playing;
 			console.log(sim_state.is_playing ? 'Playing' : 'Paused');
+				stepInput.disabled = sim_state.is_playing;
 			break;
 	
 		case 2: // Step Forward
