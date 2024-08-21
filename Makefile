@@ -13,7 +13,7 @@ NAME    := lem-in
 
 # Compiler and flags
 CC      := gcc
-CFLAGS  := -Wall -Wextra -Werror -I $(INCDIR) -I $(LIBDIR)
+CFLAGS  := -Wall -Wextra -Werror -I $(INCDIR) -I $(LIBDIR) -g
 
 # Commands
 RM      := rm -f

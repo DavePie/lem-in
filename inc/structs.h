@@ -1,51 +1,63 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-typedef unsigned int	uint;
-typedef unsigned long	ulong;
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
-
-typedef struct  s_room
+typedef struct s_room
 {
-	//position
-	int				x;
-	int				y;
-	char			*name;
-	uint			num_edges;
-	struct s_room	**edges; // rooms connected to this room
-}	t_room;
-
+	// position
+	int x;
+	int y;
+	char *name;
+	uint num_edges;
+	uint edge_cap;
+	struct s_room **edges; // rooms connected to this room
+	int *flow;			   // coresponds to edge of same index
+	int visited;
+	int level;
+} t_room;
 
 typedef struct s_path
 {
-	uint	size; // rooms in the path
-	uint	max_size;
-	t_room	**rooms;
-}	t_path;
+	uint size; // rooms in the path
+	uint cap;
+	uint min_left;
+	int flow;
+	t_room **rooms;
+	int has_backtrack;
+} t_path;
 
-
-typedef struct	s_data
+typedef struct
 {
-	uint	num_ants;
+	t_path **paths;
+	uint capacity;
+	uint size;
+} MinHeap;
 
-	t_room	*start;
-	t_room	*end;
-	uint	width; // maxium amount of parallel paths
+typedef struct s_data
+{
+	uint num_ants;
 
-	uint	num_rooms;
-	t_room	**temp_rooms; // temporary array for parsing
+	t_room *start;
+	t_room *end;
+	uint width; // maxium amount of parallel paths
 
-	uint	num_links;
-	char	**temp_links; // temporary array for parsing
+	uint num_rooms;
+	t_room **temp_rooms; // temporary array for parsing
+	uint temp_rooms_size;
 
-	uint	hash_table_size;
-	t_room	**rooms; // hash table by name of rooms
+	uint num_links;
+	char **temp_links; // temporary array for parsing
 
-	uint	n_partial_paths;
-	t_path	**partial_paths; // paths start-end that being built
+	uint hash_table_size;
+	t_room **rooms; // hash table by name of rooms
 
-	uint	n_full_paths;
-	t_path	**full_paths; // paths start-end that are complete
-}	t_data;
+	uint n_partial_paths;
+	t_path **partial_paths; // paths start-end that being built
+
+	uint n_full_paths;
+	t_path **full_paths; // paths start-end that are complete
+} t_data;
 
 #endif

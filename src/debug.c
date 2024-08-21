@@ -31,6 +31,15 @@ void	print_room(t_room *room, int print_edges)
 				ft_putstr_fd(" | ", 1);
 		}
 		ft_putchar_fd('\n', 1);
+		ft_putendl_fd("flow: ", 1);
+		if (room->flow)
+		for (uint i = 0; i < room->num_edges; i++)
+		{
+			ft_putstr_fd(ft_itoa(room->flow[i]), 1);
+			if (i < room->num_edges - 1)
+				ft_putstr_fd(" | ", 1);
+		}
+		ft_putchar_fd('\n', 1);
 	}
 	ft_putstr_fd("[============]\n", 1);
 }

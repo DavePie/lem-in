@@ -13,7 +13,8 @@ int get_data(t_data *data)
 	char *line = NULL;
 	uint modifier = NONE;
 
-	data->temp_rooms = ft_calloc(REALLOC_SIZE + 1, sizeof(t_room *));
+	data->temp_rooms_size = 20;
+	data->temp_rooms = ft_calloc(data->temp_rooms_size, sizeof(t_room *));
 	if (!data->temp_rooms)
 		return error("Error: memory allocation failed\n", NULL, NULL);
 
@@ -43,7 +44,7 @@ int get_data(t_data *data)
 		get_next_noncomment_line(INPUT_FD, &line);
 	if (line)
 		return error("Error: invalid line:\n", line, line);
-	
+
 	return 0;
 }
 
@@ -140,6 +141,8 @@ int add_room(t_data *data, char *line, uint modifier)
 	room->name = ft_strndup(line, ft_strchr(line, ' ') - line);
 	room->x = ft_atoi(ft_strchr(line, ' '));
 	room->y = ft_atoi(ft_strrchr(line, ' '));
+	room->edges = ft_calloc(10, sizeof(t_room *));
+	room->edge_cap = 10;
 
 	if (modifier == START)
 		data->start = room;
@@ -147,23 +150,23 @@ int add_room(t_data *data, char *line, uint modifier)
 		data->end = room;
 
 	data->temp_rooms[data->num_rooms++] = room;
-	if (data->num_rooms % REALLOC_SIZE == 0) // reallocation if the array is full
+	if (data->num_rooms == data->temp_rooms_size) // reallocation if the array is full
 	{
-		data->temp_rooms = ft_realloc(data->temp_rooms, data->num_rooms * sizeof(t_room *), (data->num_rooms + REALLOC_SIZE) * sizeof(t_room *));
+		data->temp_rooms = ft_realloc(data->temp_rooms, data->num_rooms * sizeof(t_room *), (data->temp_rooms_size * 2) * sizeof(t_room *));
+		data->temp_rooms_size *= 2;
 		if (!data->temp_rooms)
 			return 1;
 	}
 	return 0;
 }
 
-
 // link two rooms
 // returns 1 if there is an error, else 0
 int link_rooms(t_room *room1, t_room *room2)
 {
-	if (room1->num_edges % EDGES_REALLOC == 0)
+	if (room1->num_edges == room1->edge_cap)
 	{
-		room1->edges = ft_realloc(room1->edges, room1->num_edges * sizeof(t_room *), (room1->num_edges + EDGES_REALLOC) * sizeof(t_room *));
+		room1->edges = ft_realloc(room1->edges, room1->num_edges * sizeof(t_room *), (room1->edge_cap * 2) * sizeof(t_room *));
 		if (!room1->edges)
 			return 1;
 	}

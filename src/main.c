@@ -2,6 +2,10 @@
 #include "get_next_line.h"
 #include <time.h>
 
+int prune_path_simple(t_data *data, t_room *begin);
+
+
+
 int main()
 {
 	clock_t start = clock();
@@ -9,12 +13,9 @@ int main()
 	ft_bzero(&data, sizeof(t_data));
 
 	get_data(&data);
-	clock_t end = clock();
-
-	double cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-
-    // Print the time taken
-    printf("took %f seconds to execute \n", cpu_time_used);
+	// Print the time taken
+	printf("took %f seconds to read \n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
+	start = clock();
 
 	printf("table load: %f%%\n", htable_load(&data));
 	// get test
@@ -26,12 +27,19 @@ int main()
 	printf("ending room:\n");
 	print_room(data.end, 1);
 
-	find_best_paths(&data);
+	prune_dead_ends(&data);
+
+	printf("took %f seconds to prune dead ends\n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
+	printf("Orignal nodes: %d\n", data.num_rooms);
+	// printf("loop nodes removed %d\n", prune_path_simple(&data, data.start->edges[0]));
+	
+	assign_levels(&data);
+	find_paths(&data);
+	// find_best_paths(&data);
 	// if (get_data(&data))
 	// 	return clear_data(&data);
 	// if (validate_data(&data))
 	// 	return clear_data(&data);
-
 	return 0;
 }
 

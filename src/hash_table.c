@@ -11,7 +11,6 @@ int store_in_hash_table(t_data *data)
 	for (uint i = 0; data->temp_rooms[i]; i++)
 		if (htable_add(data, data->temp_rooms[i]))
 			return 1;
-	free(data->temp_rooms);
 	return 0;
 }
 

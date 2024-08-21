@@ -1,13 +1,9 @@
-5
+3
 ##start
-#
-# prout
-start 1 0
+0 1 0
 ##end
-1 1 1
-pouet 5 0
+1 5 0
 2 9 0
-# pouet pouet
 3 13 0
 0-2
 2-3
