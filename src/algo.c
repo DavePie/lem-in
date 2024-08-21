@@ -94,7 +94,7 @@ uint continue_search(t_data *data, t_paths *old_paths, t_paths *new_paths)
     if (!old_paths)
         return 1;
     new_paths->turns = calculate_duration(data, new_paths);
-    if (new_paths->turns >= old_paths->turns)
+    if (new_paths->turns > old_paths->turns)
         return 0;
     return 1;
 }
