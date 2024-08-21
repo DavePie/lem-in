@@ -33,6 +33,15 @@ typedef struct
 	t_path **paths;
 	uint capacity;
 	uint size;
+	uint turns;
+} t_paths;
+
+
+typedef struct
+{
+	t_path **paths;
+	uint capacity;
+	uint size;
 } MinHeap;
 
 typedef struct s_data
