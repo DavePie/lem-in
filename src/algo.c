@@ -14,7 +14,6 @@ t_path *init_path(t_room **rooms, uint num, uint cap, int has_backtrack)
         return 0;
     }
 
-
     r[num] = 0;
     if (num >= 1)
         p->min_left = rooms[num - 1]->level;
@@ -118,7 +117,7 @@ uint calculate_duration(t_data *data, t_paths *paths_group)
     return (data->num_ants - cur_ants) / (i + 1) + !!((data->num_ants - cur_ants) % (i + 1)) + (paths[i]->size - 2);
 }
 
-// we can expect at best to find a longer or equal path to the current longest path.
+// we can expect at best to find a longer or equal path to the current longest path->
 uint continue_search(t_data *data, t_paths *old_paths, t_paths *new_paths)
 {
     if (data->num_ants <= 1)
@@ -152,15 +151,68 @@ t_path *find_first_path(t_data *data)
     return p;
 }
 
+void find_new_paths(t_data *data, t_paths *n_path)
+{
+    for (uint i = 0; i < data->start->num_edges; i++)
+    {
+        if (data->start->flow[i] == 1)
+        {
+            t_room *temp[2] = {data->start, data->start->edges[i]};
+            t_path *sol = init_path(temp, 2, data->num_rooms, 0);
+            t_room *cur = sol->rooms[sol->size - 1];
+
+            while (cur != data->end)
+                for (uint j = 0; j < cur->num_edges; j++)
+                    if (cur->flow[j] == 1)
+                    {
+                        sol->rooms[sol->size++] = cur->edges[j];
+                        cur = cur->edges[j];
+                        break;
+                    }
+            n_path->paths[n_path->size++] = sol;
+        }
+    }
+}
+
+t_path *find_flow_path(t_data *data, MinHeap *h, int *visit_id)
+{
+    while (h->size > 0)
+    {
+        t_path *p = extractMin(h);
+        t_room *last = p->rooms[p->size - 1];
+        for (uint i = 0; i < last->num_edges; i++)
+        {
+            t_room *edge = last->edges[i];
+            if (edge == data->end && last->flow[i] < 1)
+            {
+                p->rooms[p->size++] = edge;
+                visit_path(p);
+                update_flow(p);
+                return p;
+            }
+            if ((edge->visited != *visit_id && last->flow[i] < 1) && (last->flow[i] == -1 || (p->has_backtrack || last->visited == *visit_id)))
+            {
+                if (edge->visited != -1 && edge->visited != *visit_id)
+                    edge->visited = *visit_id;
+                p->rooms[p->size] = edge;
+                insert(h, init_path(p->rooms, p->size + 1, p->cap + 1, last->visited != *visit_id), data);
+            }
+        }
+        free(p->rooms);
+        free(p);
+    }
+    return 0;
+}
+
 void find_paths(t_data *data)
 {
 
     t_path *first = find_first_path(data);
 
-    data->heap = (MinHeap){.capacity = 5000, .paths = safe_malloc(sizeof(t_path *) * 5000, data), .size = 0};
-    MinHeap h = data->heap;
+    data->heap = (MinHeap){.capacity = 400000, .paths = safe_malloc(sizeof(t_path *) * 400000, data), .size = 0};
+    MinHeap *h = &data->heap;
     int visit_id = 2;
-    int found = 1;
+    int new_path_found = 1;
 
     // Can't have more paths than number of edges connecting to start
     data->old_paths = (t_paths){.capacity = data->start->num_edges, .paths = safe_malloc(sizeof(t_path *) * data->start->num_edges, data)};
@@ -172,68 +224,23 @@ void find_paths(t_data *data)
     o_path->paths[o_path->size++] = first;
     o_path->turns = calculate_duration(data, o_path);
 
-    while (found)
+    while (new_path_found)
     {
-        found = 0;
+        new_path_found = 0;
         t_path *start = init_path(&data->start, 1, 20, 0);
         data->start->visited = visit_id;
-        insert(&h, start, data);
+        insert(h, start, data);
 
-        t_path *best = 0;
-        while (h.size > 0 && best == 0)
+        new_path_found = !!find_flow_path(data, h, &visit_id);
+        while (h->size > 0)
         {
-            t_path *p = extractMin(&h);
-            t_room *last = p->rooms[p->size - 1];
-            for (uint i = 0; i < last->num_edges; i++)
-            {
-                t_room *edge = last->edges[i];
-                if (edge == data->end && last->flow[i] < 1)
-                {
-                    p->rooms[p->size++] = edge;
-                    best = p;
-                    found = 1;
-                    visit_id++;
-                    visit_path(p);
-                    update_flow(p);
-                    break;
-                }
-                if ((edge->visited != visit_id && last->flow[i] < 1) && (last->flow[i] == -1 || (p->has_backtrack || last->visited == visit_id)))
-                {
-                    if (edge->visited != -1 && edge->visited != visit_id)
-                        edge->visited = visit_id;
-                    p->rooms[p->size] = edge;
-                    insert(&h, init_path(p->rooms, p->size + 1, p->cap + 1, last->visited != visit_id), data);
-                }
-            }
-            free(p->rooms);
-            free(p);
+            free(h->paths[h->size - 1]->rooms);
+            free(h->paths[h->size-- - 1]);
         }
-        while (h.size > 0)
-        {
-            free(h.paths[h.size - 1]->rooms);
-            free(h.paths[h.size-- - 1]);
-        }
-        if (!found)
+        visit_id++;
+        if (!new_path_found)
             continue;
-        for (uint i = 0; i < data->start->num_edges; i++)
-        {
-            if (data->start->flow[i] == 1)
-            {
-                t_room *temp[2] = {data->start, data->start->edges[i]};
-                        t_path *sol = init_path(temp, 2, data->num_rooms, 0);
-                                t_room *cur = sol->rooms[sol->size - 1];
-
-                while (cur != data->end)
-                    for (uint j = 0; j < cur->num_edges; j++)
-                        if (cur->flow[j] == 1)
-                        {
-                            sol->rooms[sol->size++] = cur->edges[j];
-                            cur = cur->edges[j];
-                            break;
-                        }
-                n_path->paths[n_path->size++] = sol;
-            }
-        }
+        find_new_paths(data, n_path);
         if (continue_search(data, o_path, n_path))
         {
             o_path->turns = n_path->turns;
