@@ -8,12 +8,17 @@ int main()
     t_data data;
     ft_bzero(&data, sizeof(t_data));
 
-    get_data(&data);
-    // Print the time taken
-    printf("took %f seconds to read \n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
+    if (get_data(&data))
+        safe_exit(&data, 1);
+    if (!data.start || !data.end)
+    {
+        printf("Invalid map (missing start/end)\n");
+        safe_exit(&data, 1);
+    }
 
-    printf("table load: %f%%\n", htable_load(&data));
+    htable_load(&data);
 
+    
     start = clock();
     prune_dead_ends(&data);
 
@@ -21,15 +26,20 @@ int main()
     printf("Orignal nodes: %d\n", data.num_rooms);
     // printf("loop nodes removed %d\n", prune_path_simple(&data, data.start->edges[0]));
 
-    assign_levels(&data);
+    
+    if (!assign_levels(&data))
+    {
+        printf("Invalid map (no path to end)\n");
+        safe_exit(&data, 1);
+    }
 
     start = clock();
 
     find_paths(&data);
 
     printf("took %f seconds to calculate best path\n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
-
-    safe_exit(&data);
+    print_map(&data);
+    safe_exit(&data, 0);
     return 0;
 }
 

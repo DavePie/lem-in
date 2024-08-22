@@ -20,7 +20,14 @@ int get_data(t_data *data)
 
 	get_next_noncomment_line(INPUT_FD, &line);
 	if (!ft_isnumber(line))
-		return error("Error: first entry must be ants quantity:\n", line, line);
+	{
+		while (line)
+		{
+			free(line);
+			line = get_next_line(INPUT_FD);
+		}
+		return error("Error: first entry must be ants quantity:\n", 0, 0);
+	}
 	data->num_ants = ft_atoi(line);
 	free(line);
 	while (get_next_noncomment_line(INPUT_FD, &line))

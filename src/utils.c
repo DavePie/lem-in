@@ -35,7 +35,7 @@ void safe_free(void *ptr)
         free(ptr);
 }
 
-void safe_exit(t_data *data)
+void safe_exit(t_data *data, int code)
 {
     (void)data;
     for (uint i = 0; i < data->new_paths.size; i++)
@@ -62,12 +62,14 @@ void safe_exit(t_data *data)
     free(data->rooms);
 
     safe_free(data->heap.paths);
+
+    exit(code);
 }
 
 void *safe_malloc(size_t size, t_data *data)
 {
     void *ans = malloc(size);
     if (!ans)
-        safe_exit(data);
+        safe_exit(data, 1);
     return ans;
 }

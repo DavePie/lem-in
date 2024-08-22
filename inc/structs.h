@@ -56,7 +56,6 @@ typedef struct s_data
 	t_room **temp_rooms; // temporary array for parsing
 	uint temp_rooms_size;
 
-	uint num_links;
 	char **temp_links; // temporary array for parsing
 
 	uint hash_table_size;

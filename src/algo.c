@@ -2,10 +2,18 @@
 
 t_path *init_path(t_room **rooms, uint num, uint cap, int has_backtrack)
 {
-
-    t_path *p = malloc(sizeof(t_path));
-    t_room **r = malloc(sizeof(t_room *) * cap);
     uint n = num;
+    t_path *p = malloc(sizeof(t_path));
+
+    if (!p)
+        return 0;
+    t_room **r = malloc(sizeof(t_room *) * cap);
+    if (!r)
+    {
+        free(p);
+        return 0;
+    }
+
 
     r[num] = 0;
     if (num >= 1)
@@ -14,19 +22,6 @@ t_path *init_path(t_room **rooms, uint num, uint cap, int has_backtrack)
         r[num] = rooms[num];
     *p = (t_path){.cap = cap, .rooms = r, .size = n, .has_backtrack = has_backtrack};
     return p;
-}
-
-void set_path(t_path *p, t_room **rooms, uint num, uint cap, int has_backtrack)
-{
-    t_room **r = malloc(sizeof(t_room *) * cap);
-    uint n = num;
-
-    r[num] = 0;
-    if (num >= 1)
-        p->min_left = rooms[num - 1]->level;
-    while (num-- > 0)
-        r[num] = rooms[num];
-    *p = (t_path){.cap = cap, .rooms = r, .size = n, .has_backtrack = has_backtrack};
 }
 
 uint get_edge_index(t_room *r, t_room *edge)
@@ -40,7 +35,7 @@ uint get_edge_index(t_room *r, t_room *edge)
 int assign_levels(t_data *data)
 {
     int path_to_sink = 0;
-    t_room **queue = malloc(sizeof(t_room *) * data->num_rooms);
+    t_room **queue = safe_malloc(sizeof(t_room *) * data->num_rooms, data);
     if (!queue)
         return 0;
 
@@ -163,7 +158,7 @@ void find_paths(t_data *data)
 
     t_path *first = find_first_path(data);
 
-    data->heap = (MinHeap){.capacity = 20, .paths = malloc(sizeof(t_path *) * 20), .size = 0};
+    data->heap = (MinHeap){.capacity = 20, .paths = safe_malloc(sizeof(t_path *) * 20, data), .size = 0};
     MinHeap h = data->heap;
     int visit_id = 2;
     int found = 1;
@@ -183,7 +178,7 @@ void find_paths(t_data *data)
         found = 0;
         t_path *start = init_path(&data->start, 1, 20, 0);
         data->start->visited = visit_id;
-        insert(&h, start);
+        insert(&h, start, data);
 
         t_path *best = 0;
         while (h.size > 0 && best == 0)
@@ -197,7 +192,6 @@ void find_paths(t_data *data)
                 {
                     p->rooms[p->size++] = edge;
                     best = p;
-                    h.size = 0;
                     found = 1;
                     visit_id++;
                     visit_path(p);
@@ -209,7 +203,7 @@ void find_paths(t_data *data)
                     if (edge->visited != -1 && edge->visited != visit_id)
                         edge->visited = visit_id;
                     p->rooms[p->size] = edge;
-                    insert(&h, init_path(p->rooms, p->size + 1, p->cap + 1, last->visited != visit_id));
+                    insert(&h, init_path(p->rooms, p->size + 1, p->cap + 1, last->visited != visit_id), data);
                 }
             }
             free(p->rooms);
@@ -224,8 +218,8 @@ void find_paths(t_data *data)
             continue;
         // printf("FOR FLOW WE HAVE\n");
         // print_path(best);
-        // printf("FOR PATHS WE HAVE:\n");
-        // printf("num %d\n", data->start->num_edges);
+        printf("FOR PATHS WE HAVE:\n");
+        printf("num %d\n", data->start->num_edges);
         for (uint i = 0; i < data->start->num_edges; i++)
         {
             if (data->start->flow[i] == 1)
@@ -245,8 +239,8 @@ void find_paths(t_data *data)
                 n_path->paths[n_path->size++] = sol;
             }
         }
-        // for (uint j = 0; j < new_path.size; j++)
-        //     print_path(new_path.paths[j]);
+        // for (uint j = 0; j < n_path->size; j++)
+        //     print_path(n_path->paths[j]);
         if (continue_search(data, o_path, n_path))
         {
             o_path->turns = n_path->turns;

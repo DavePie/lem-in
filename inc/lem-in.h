@@ -24,7 +24,7 @@ float htable_load(t_data *data);
 // utils
 int error(char *msg, char *line, void *to_free);
 uint get_next_prime(uint n);
-void safe_exit(t_data *data);
+void safe_exit(t_data *data, int code);
 void *safe_malloc(size_t size, t_data *data);
 
 // prune
@@ -42,11 +42,11 @@ void print_edges(t_room *room);
 void sum_edges(t_room *room);
 void print_path(t_path *path);
 void sum_path(t_path *path);
-void print_paths(t_data *data);
 void print_data(t_data *data, int print_rooms, int print_edges, int print_paths);
+void print_map(t_data *data);
 
 // heap
-void insert(MinHeap *heap, t_path *path);
+void insert(MinHeap *heap, t_path *path, t_data *data);
 t_path *extractMin(MinHeap *heap);
 
 #endif

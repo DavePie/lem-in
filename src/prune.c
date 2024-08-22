@@ -25,7 +25,7 @@ int prune_path_simple(t_data *data, t_room *begin)
 
     if (begin->num_edges == 2)
         return 0;
-    t_p_path *paths = malloc(sizeof(t_p_path) * begin->num_edges);
+    t_p_path *paths = safe_malloc(sizeof(t_p_path) * begin->num_edges, data);
 
     for (uint i = 0; i < begin->num_edges; i++)
     {

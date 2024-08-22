@@ -200,3 +200,29 @@ void	print_data(t_data *data, int print_rooms, int print_edges, int print_paths)
 	// }
 	ft_putstr_fd("[============]\n", 1);
 }
+
+void print_map(t_data *data)
+{
+	printf("%d\n", data->num_ants);
+    for (uint i = 0; i < data->num_rooms; i++)
+    {
+        t_room *r = data->temp_rooms[i];
+        if (r == data->start)
+            printf("##start\n");
+        if (r == data->end)
+            printf("##end\n");
+        printf("%s %d %d\n", r->name, r->x, r->y);
+    }
+
+    for (uint i = 0; i < data->num_rooms; i++)
+    {
+        t_room *r = data->temp_rooms[i];
+        for (uint j = 0; j < r->num_edges; j++)
+        {
+            t_room *e = r->edges[j];
+            if (e > r)
+                printf("%s-%s\n", r->name, e->name);
+        }
+    }
+	printf("\n");
+}

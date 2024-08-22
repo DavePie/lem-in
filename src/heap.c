@@ -30,12 +30,12 @@ void minHeapify(MinHeap *heap, uint index)
     }
 }
 
-void insert(MinHeap *heap, t_path *path)
+void insert(MinHeap *heap, t_path *path, t_data *data)
 {
     if (heap->size == heap->capacity)
     {
         heap->capacity *= 2;
-        t_path **temp = malloc(sizeof(t_path *) * heap->capacity);
+        t_path **temp = safe_malloc(sizeof(t_path *) * heap->capacity, data);
         for (uint i = 0; i < heap->size; i++)
             temp[i] = heap->paths[i];
     }
