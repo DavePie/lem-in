@@ -157,7 +157,7 @@ void find_paths(t_data *data)
 
     t_path *first = find_first_path(data);
 
-    data->heap = (MinHeap){.capacity = 2000000, .paths = safe_malloc(sizeof(t_path *) * 2000000, data), .size = 0};
+    data->heap = (MinHeap){.capacity = 5000, .paths = safe_malloc(sizeof(t_path *) * 5000, data), .size = 0};
     MinHeap h = data->heap;
     int visit_id = 2;
     int found = 1;
