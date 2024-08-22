@@ -15,18 +15,11 @@ int main()
 	get_data(&data);
 	// Print the time taken
 	printf("took %f seconds to read \n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
-	start = clock();
 
 	printf("table load: %f%%\n", htable_load(&data));
-	// get test
-	t_room *tmp = htable_get(&data, "start");
-	printf("get test: %s\n", tmp ? tmp->name : "not found");
 
-	printf("starting room:\n");
-	print_room(data.start, 1);
-	printf("ending room:\n");
-	print_room(data.end, 1);
 
+	start = clock();
 	prune_dead_ends(&data);
 
 	printf("took %f seconds to prune dead ends\n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
@@ -34,12 +27,13 @@ int main()
 	// printf("loop nodes removed %d\n", prune_path_simple(&data, data.start->edges[0]));
 	
 	assign_levels(&data);
+
+	start = clock();
+
 	find_paths(&data);
-	// find_best_paths(&data);
-	// if (get_data(&data))
-	// 	return clear_data(&data);
-	// if (validate_data(&data))
-	// 	return clear_data(&data);
+	
+	printf("took %f seconds to calculate best path\n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
+
 	return 0;
 }
 

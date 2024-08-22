@@ -62,11 +62,6 @@ typedef struct s_data
 	uint hash_table_size;
 	t_room **rooms; // hash table by name of rooms
 
-	uint n_partial_paths;
-	t_path **partial_paths; // paths start-end that being built
-
-	uint n_full_paths;
-	t_path **full_paths; // paths start-end that are complete
 } t_data;
 
 #endif

@@ -1,5 +1,34 @@
 #include "lem-in.h"
 
+t_path *init_path(t_room **rooms, uint num, uint cap, int has_backtrack)
+{
+
+    t_path *p = malloc(sizeof(t_path));
+    t_room **r = malloc(sizeof(t_room *) * cap);
+    uint n = num;
+
+    r[num] = 0;
+    if (num >= 1)
+        p->min_left = rooms[num - 1]->level;
+    while (num-- > 0)
+        r[num] = rooms[num];
+    *p = (t_path){.cap = cap, .rooms = r, .size = n, .has_backtrack = has_backtrack};
+    return p;
+}
+
+void set_path(t_path *p, t_room **rooms, uint num, uint cap, int has_backtrack)
+{
+    t_room **r = malloc(sizeof(t_room *) * cap);
+    uint n = num;
+
+    r[num] = 0;
+    if (num >= 1)
+        p->min_left = rooms[num - 1]->level;
+    while (num-- > 0)
+        r[num] = rooms[num];
+    *p = (t_path){.cap = cap, .rooms = r, .size = n, .has_backtrack = has_backtrack};
+}
+
 uint get_edge_index(t_room *r, t_room *edge)
 {
     for (uint i = 0; i < r->num_edges; i++)
@@ -60,43 +89,50 @@ void update_flow(t_path *p)
     }
 }
 
-uint calculate_duration(t_data *data, t_paths *paths)
+void sort_paths(t_paths *paths_group)
 {
+    uint size = paths_group->size;
+    t_path **paths = paths_group->paths;
+
     // simple sort
-    for (uint i = 0; i < paths->size - 1; i++)
+    for (uint i = 0; i < size - 1; i++)
     {
         uint min_i = i;
-        for (uint j = i + 1; j < paths->size; j++)
-            if (paths->paths[min_i]->size > paths->paths[j]->size)
+        for (uint j = i + 1; j < size; j++)
+            if (paths[min_i]->size > paths[j]->size)
                 min_i = j;
-        t_path *temp = paths->paths[min_i];
-        paths->paths[min_i] = paths->paths[i];
-        paths->paths[i] = temp;
+        t_path *temp = paths[min_i];
+        paths[min_i] = paths[i];
+        paths[i] = temp;
     }
+}
 
+uint calculate_duration(t_data *data, t_paths *paths_group)
+{
+    uint size = paths_group->size;
+    t_path **paths = paths_group->paths;
     uint cur_ants = 0;
     uint i = 0;
-    for (; i < paths->size - 1; i++)
+    for (; i < size - 1; i++)
     {
-        uint height_change = paths->paths[i + 1]->size - paths->paths[i]->size;
+        uint height_change = paths[i + 1]->size - paths[i]->size;
         if (height_change * (i + 1) + cur_ants > data->num_ants)
             break;
         cur_ants += height_change * (i + 1);
     }
-    return (data->num_ants - cur_ants) / (i + 1) + !!((data->num_ants - cur_ants) % (i + 1)) + (paths->paths[i]->size - 2);
+    return (data->num_ants - cur_ants) / (i + 1) + !!((data->num_ants - cur_ants) % (i + 1)) + (paths[i]->size - 2);
 }
 
-// // we can expect at best to find a longer or equal path to the current longest path.
+// we can expect at best to find a longer or equal path to the current longest path.
 uint continue_search(t_data *data, t_paths *old_paths, t_paths *new_paths)
 {
     if (data->num_ants <= 1)
         return 0;
     if (!old_paths)
         return 1;
+    sort_paths(new_paths);
     new_paths->turns = calculate_duration(data, new_paths);
-    if (new_paths->turns > old_paths->turns)
-        return 0;
-    return 1;
+    return (new_paths->turns <= old_paths->turns);
 }
 
 t_path *find_first_path(t_data *data)
@@ -109,7 +145,6 @@ t_path *find_first_path(t_data *data)
     {
         int i = 0;
         cur->visited = 1;
-        printf("On node %s with level %d\n", cur->name, cur->level);
         while (cur->edges[i]->level >= cur->level)
             i++;
         p->rooms[p->size++] = cur->edges[i];
@@ -128,7 +163,7 @@ void find_paths(t_data *data)
 
     t_path *first = find_first_path(data);
 
-    MinHeap h = (MinHeap){.capacity = 1000000, .paths = malloc(sizeof(t_path *) * 1000000), .size = 0};
+    MinHeap h = (MinHeap){.capacity = 20, .paths = malloc(sizeof(t_path *) * 20), .size = 0};
 
     int visit_id = 2;
     int found = 1;
@@ -137,12 +172,9 @@ void find_paths(t_data *data)
 
     old_path.paths[old_path.size++] = first;
     old_path.turns = calculate_duration(data, &old_path);
-    printf("%d turns currently\n", old_path.turns);
 
     while (found)
     {
-        printf("================================================================================\n");
-
         found = 0;
         t_path *start = init_path(&data->start, 1, 20, 0);
         data->start->visited = visit_id;
@@ -178,40 +210,31 @@ void find_paths(t_data *data)
         }
         if (!found)
             continue;
-        printf("FOR FLOW WE HAVE\n");
-        print_path(best);
-        printf("FOR PATHS WE HAVE:\n");
-        printf("num %d\n", data->start->num_edges);
+        // printf("FOR FLOW WE HAVE\n");
+        // print_path(best);
+        // printf("FOR PATHS WE HAVE:\n");
+        // printf("num %d\n", data->start->num_edges);
         for (uint i = 0; i < data->start->num_edges; i++)
         {
-            // printf("%d\n", i);
             if (data->start->flow[i] == 1)
             {
-                // printf("HAS SOMETHING for %s\n", data->start->edges[i]->name);
                 t_room *temp[2] = {data->start, data->start->edges[i]};
                 t_path *sol = init_path(temp, 2, 200000, 0);
                 t_room *cur = sol->rooms[sol->size - 1];
 
                 while (cur != data->end)
-                {
                     for (uint j = 0; j < cur->num_edges; j++)
-                    {
                         if (cur->flow[j] == 1)
                         {
-                            // printf("flow from (%s) to (%s)\n", cur->name, cur->edges[j]->name);
                             sol->rooms[sol->size++] = cur->edges[j];
                             cur = cur->edges[j];
                             break;
                         }
-                    }
-                }
                 new_path.paths[new_path.size++] = sol;
             }
         }
-        for (uint j = 0; j < new_path.size; j++)
-        {
-            print_path(new_path.paths[j]);
-        }
+        // for (uint j = 0; j < new_path.size; j++)
+        //     print_path(new_path.paths[j]);
         if (continue_search(data, &old_path, &new_path))
         {
             old_path.size = new_path.size;
@@ -221,11 +244,6 @@ void find_paths(t_data *data)
             new_path.size = 0;
         }
         else
-        {
-            printf("%d turns before, now %d\n", old_path.turns, new_path.turns);
-
             break;
-        }
-        printf("%d turns currently\n", old_path.turns);
     }
 }

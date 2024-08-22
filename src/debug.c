@@ -140,26 +140,26 @@ void	sum_path(t_path *path)
 
 
 // print paths
-void	print_paths(t_data *data)
-{
+// void	print_paths(t_data *data)
+// {
 
-	ft_putstr_fd("Partial paths: ", 1);
-	ft_putnbrendl_fd(data->n_partial_paths, 1);
-	for (uint i = 0; i < data->n_partial_paths; i++)
-	{
-		ft_putstr_fd(data->start->name, 1);
-		ft_putstr_fd("->", 1);
-		sum_path(data->partial_paths[i]);
-	}
-	ft_putstr_fd("Full paths: ", 1);
-	ft_putnbrendl_fd(data->n_full_paths, 1);
-	for (uint i = 0; i < data->n_full_paths; i++)
-	{
-		ft_putstr_fd(data->start->name, 1);
-		ft_putstr_fd("->", 1);
-		sum_path(data->full_paths[i]);
-	}
-}
+// 	ft_putstr_fd("Partial paths: ", 1);
+// 	ft_putnbrendl_fd(data->n_partial_paths, 1);
+// 	for (uint i = 0; i < data->n_partial_paths; i++)
+// 	{
+// 		ft_putstr_fd(data->start->name, 1);
+// 		ft_putstr_fd("->", 1);
+// 		sum_path(data->partial_paths[i]);
+// 	}
+// 	ft_putstr_fd("Full paths: ", 1);
+// 	ft_putnbrendl_fd(data->n_full_paths, 1);
+// 	for (uint i = 0; i < data->n_full_paths; i++)
+// 	{
+// 		ft_putstr_fd(data->start->name, 1);
+// 		ft_putstr_fd("->", 1);
+// 		sum_path(data->full_paths[i]);
+// 	}
+// }
 
 
 // print data
@@ -188,14 +188,15 @@ void	print_data(t_data *data, int print_rooms, int print_edges, int print_paths)
 			print_room(data->rooms[i], print_edges);
 	}
 
-	if (print_paths)
-	{
-		ft_putendl_fd("partial_paths:", 1);
-		for (uint i = 0; i < data->n_partial_paths; i++)
-			print_path(data->partial_paths[i]);
-		ft_putendl_fd("full_paths:", 1);
-		for (uint i = 0; i < data->n_full_paths; i++)
-			print_path(data->full_paths[i]);
-	}
+	(void) print_paths;
+	// if (print_paths)
+	// {
+	// 	ft_putendl_fd("partial_paths:", 1);
+	// 	for (uint i = 0; i < data->n_partial_paths; i++)
+	// 		print_path(data->partial_paths[i]);
+	// 	ft_putendl_fd("full_paths:", 1);
+	// 	for (uint i = 0; i < data->n_full_paths; i++)
+	// 		print_path(data->full_paths[i]);
+	// }
 	ft_putstr_fd("[============]\n", 1);
 }
