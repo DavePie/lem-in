@@ -22,7 +22,7 @@ int get_data(t_data *data)
 	if (!ft_isnumber(line))
 		return error("Error: first entry must be ants quantity:\n", line, line);
 	data->num_ants = ft_atoi(line);
-
+	free(line);
 	while (get_next_noncomment_line(INPUT_FD, &line))
 	{
 		if (!ft_strncmp(line, "##", 2)) // directive
@@ -35,13 +35,17 @@ int get_data(t_data *data)
 		}
 		else
 			break;
+		free(line);
 	}
 	if (modifier)
 		return error("Error: invalid command usuage:\n", line, line);
 	if (store_in_hash_table(data))
 		return error(NULL, NULL, NULL);
 	while (line && is_link_shaped(data, line))
+	{
+		free(line);
 		get_next_noncomment_line(INPUT_FD, &line);
+	}
 	if (line)
 		return error("Error: invalid line:\n", line, line);
 

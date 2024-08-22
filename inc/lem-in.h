@@ -24,7 +24,9 @@ float htable_load(t_data *data);
 // utils
 int error(char *msg, char *line, void *to_free);
 uint get_next_prime(uint n);
-t_path **find_best_paths(t_data *data);
+void safe_exit(t_data *data);
+void *safe_malloc(size_t size, t_data *data);
+
 // prune
 int prune_path_simple(t_data *data, t_room *begin);
 int prune_dead_ends(t_data *data);

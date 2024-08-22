@@ -163,15 +163,20 @@ void find_paths(t_data *data)
 
     t_path *first = find_first_path(data);
 
-    MinHeap h = (MinHeap){.capacity = 20, .paths = malloc(sizeof(t_path *) * 20), .size = 0};
-
+    data->heap = (MinHeap){.capacity = 20, .paths = malloc(sizeof(t_path *) * 20), .size = 0};
+    MinHeap h = data->heap;
     int visit_id = 2;
     int found = 1;
-    t_paths old_path = (t_paths){.capacity = data->start->num_edges, .paths = malloc(sizeof(t_path *) * data->start->num_edges)};
-    t_paths new_path = (t_paths){.capacity = data->start->num_edges, .paths = malloc(sizeof(t_path *) * data->start->num_edges)};
 
-    old_path.paths[old_path.size++] = first;
-    old_path.turns = calculate_duration(data, &old_path);
+    // Can't have more paths than number of edges connecting to start
+    data->old_paths = (t_paths){.capacity = data->start->num_edges, .paths = safe_malloc(sizeof(t_path *) * data->start->num_edges, data)};
+    data->new_paths = (t_paths){.capacity = data->start->num_edges, .paths = safe_malloc(sizeof(t_path *) * data->start->num_edges, data)};
+
+    t_paths *o_path = &data->old_paths;
+    t_paths *n_path = &data->old_paths;
+
+    o_path->paths[o_path->size++] = first;
+    o_path->turns = calculate_duration(data, o_path);
 
     while (found)
     {
@@ -207,6 +212,13 @@ void find_paths(t_data *data)
                     insert(&h, init_path(p->rooms, p->size + 1, p->cap + 1, last->visited != visit_id));
                 }
             }
+            free(p->rooms);
+            free(p);
+        }
+        while (h.size > 0)
+        {
+            free(h.paths[h.size - 1]->rooms);
+            free(h.paths[h.size-- - 1]);
         }
         if (!found)
             continue;
@@ -219,7 +231,7 @@ void find_paths(t_data *data)
             if (data->start->flow[i] == 1)
             {
                 t_room *temp[2] = {data->start, data->start->edges[i]};
-                t_path *sol = init_path(temp, 2, 200000, 0);
+                t_path *sol = init_path(temp, 2, data->num_rooms, 0);
                 t_room *cur = sol->rooms[sol->size - 1];
 
                 while (cur != data->end)
@@ -230,18 +242,26 @@ void find_paths(t_data *data)
                             cur = cur->edges[j];
                             break;
                         }
-                new_path.paths[new_path.size++] = sol;
+                n_path->paths[n_path->size++] = sol;
             }
         }
         // for (uint j = 0; j < new_path.size; j++)
         //     print_path(new_path.paths[j]);
-        if (continue_search(data, &old_path, &new_path))
+        if (continue_search(data, o_path, n_path))
         {
-            old_path.size = new_path.size;
-            old_path.turns = new_path.turns;
-            for (uint k = 0; k < new_path.size; k++)
-                old_path.paths[k] = new_path.paths[k];
-            new_path.size = 0;
+            o_path->turns = n_path->turns;
+            for (uint k = 0; k < n_path->size; k++)
+            {
+                if (k < o_path->size)
+                {
+                    free(o_path->paths[k]->rooms);
+                    free(o_path->paths[k]);
+                }
+                o_path->paths[k] = n_path->paths[k];
+            }
+            o_path->size = n_path->size;
+
+            n_path->size = 0;
         }
         else
             break;

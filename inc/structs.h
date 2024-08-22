@@ -62,6 +62,10 @@ typedef struct s_data
 	uint hash_table_size;
 	t_room **rooms; // hash table by name of rooms
 
+	t_paths old_paths;
+	t_paths new_paths;
+
+	MinHeap heap;
 } t_data;
 
 #endif
