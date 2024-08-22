@@ -18,7 +18,6 @@ int main()
 
     htable_load(&data);
 
-    
     start = clock();
     prune_dead_ends(&data);
 
@@ -26,7 +25,6 @@ int main()
     printf("Orignal nodes: %d\n", data.num_rooms);
     // printf("loop nodes removed %d\n", prune_path_simple(&data, data.start->edges[0]));
 
-    
     if (!assign_levels(&data))
     {
         printf("Invalid map (no path to end)\n");
@@ -39,6 +37,7 @@ int main()
 
     printf("took %f seconds to calculate best path\n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
     print_map(&data);
+    simulate(&data);
     safe_exit(&data, 0);
     return 0;
 }

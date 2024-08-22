@@ -49,4 +49,7 @@ void print_map(t_data *data);
 void insert(MinHeap *heap, t_path *path, t_data *data);
 t_path *extractMin(MinHeap *heap);
 
+// simulate
+void simulate(t_data *data);
+
 #endif

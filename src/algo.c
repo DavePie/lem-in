@@ -149,7 +149,6 @@ t_path *find_first_path(t_data *data)
         cur = cur->edges[i];
     }
     visit_path(p);
-    print_path(p);
     return p;
 }
 
@@ -158,7 +157,7 @@ void find_paths(t_data *data)
 
     t_path *first = find_first_path(data);
 
-    data->heap = (MinHeap){.capacity = 20, .paths = safe_malloc(sizeof(t_path *) * 20, data), .size = 0};
+    data->heap = (MinHeap){.capacity = 200000, .paths = safe_malloc(sizeof(t_path *) * 200000, data), .size = 0};
     MinHeap h = data->heap;
     int visit_id = 2;
     int found = 1;
@@ -168,7 +167,7 @@ void find_paths(t_data *data)
     data->new_paths = (t_paths){.capacity = data->start->num_edges, .paths = safe_malloc(sizeof(t_path *) * data->start->num_edges, data)};
 
     t_paths *o_path = &data->old_paths;
-    t_paths *n_path = &data->old_paths;
+    t_paths *n_path = &data->new_paths;
 
     o_path->paths[o_path->size++] = first;
     o_path->turns = calculate_duration(data, o_path);
@@ -216,17 +215,13 @@ void find_paths(t_data *data)
         }
         if (!found)
             continue;
-        // printf("FOR FLOW WE HAVE\n");
-        // print_path(best);
-        printf("FOR PATHS WE HAVE:\n");
-        printf("num %d\n", data->start->num_edges);
         for (uint i = 0; i < data->start->num_edges; i++)
         {
             if (data->start->flow[i] == 1)
             {
                 t_room *temp[2] = {data->start, data->start->edges[i]};
-                t_path *sol = init_path(temp, 2, data->num_rooms, 0);
-                t_room *cur = sol->rooms[sol->size - 1];
+                        t_path *sol = init_path(temp, 2, data->num_rooms, 0);
+                                t_room *cur = sol->rooms[sol->size - 1];
 
                 while (cur != data->end)
                     for (uint j = 0; j < cur->num_edges; j++)
@@ -239,8 +234,6 @@ void find_paths(t_data *data)
                 n_path->paths[n_path->size++] = sol;
             }
         }
-        // for (uint j = 0; j < n_path->size; j++)
-        //     print_path(n_path->paths[j]);
         if (continue_search(data, o_path, n_path))
         {
             o_path->turns = n_path->turns;

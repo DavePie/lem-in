@@ -178,6 +178,7 @@ int link_rooms(t_room *room1, t_room *room2)
 	if (room1->num_edges == room1->edge_cap)
 	{
 		room1->edges = ft_realloc(room1->edges, room1->num_edges * sizeof(t_room *), (room1->edge_cap * 2) * sizeof(t_room *));
+		room1->edge_cap *= 2;
 		if (!room1->edges)
 			return 1;
 	}
