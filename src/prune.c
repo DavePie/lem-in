@@ -116,7 +116,7 @@ int prune_dead_ends(t_data *data)
             cur = cur->edges[0];
         }
     }
-    printf("min prunes: %d\n", min_prune);
-    printf("pruned extended prunes: %d\n", extended_prune);
+    printf("#min prunes: %d\n", min_prune);
+    printf("#pruned extended prunes: %d\n", extended_prune);
     return extended_prune;
 }
