@@ -128,6 +128,7 @@ int is_link_shaped(t_data *data, char *line)
 		return 0;
 	link_rooms(room1, room2, data);
 	link_rooms(room2, room1, data);
+	return 1;
 }
 
 // adds a room to the data in temp_rooms

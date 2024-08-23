@@ -106,7 +106,7 @@ int prune_dead_ends(t_data *data)
     for (uint i = 0; i < data->num_rooms; i++)
     {
         t_room *cur = data->temp_rooms[i];
-        cur->flow = ft_calloc(cur->num_edges, sizeof(int));
+        cur->flow = safe_calloc(cur->num_edges, sizeof(int), data);
         if (cur != data->start && cur != data->end && cur->num_edges == 1)
             min_prune++;
         while (cur != data->start && cur != data->end && cur->num_edges == 1)
