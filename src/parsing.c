@@ -2,82 +2,76 @@
 
 int is_room_shaped(char *line);
 int is_link_shaped(t_data *data, char *line);
-int add_room(t_data *data, char *line, uint modifier);
+int add_room(t_data *data, uint modifier);
 int link_rooms(t_room *room1, t_room *room2);
-char *get_next_noncomment_line(int fd, char **line);
+char *get_next_noncomment_line(int fd, t_data *data);
 
 // read the input and store the data (num ants, rooms and edges)
 // returns 1 if there is an error, else 0
 int get_data(t_data *data)
 {
-	char *line = NULL;
+	data->line = NULL;
 	uint modifier = NONE;
 
 	data->temp_rooms_size = 20;
 	data->temp_rooms = ft_calloc(data->temp_rooms_size, sizeof(t_room *));
 	if (!data->temp_rooms)
-		return error("Error: memory allocation failed\n", NULL, NULL);
+		error("Error: memory allocation failed\n", NULL, data);
 
-	get_next_noncomment_line(INPUT_FD, &line);
-	if (!ft_isnumber(line))
+	get_next_noncomment_line(INPUT_FD, data);
+	if (!data->line || !ft_isnumber(data->line))
+		error("Error: first entry must be ants quantity:\n", 0, data);
+	data->num_ants = ft_atoi(data->line);
+	zero_free(&data->line);
+	while (get_next_noncomment_line(INPUT_FD, data))
 	{
-		while (line)
+		if (!ft_strncmp(data->line, "##", 2)) // directive
+			modifier = !ft_strcmp(data->line + 2, "start") * START + !ft_strcmp(data->line + 2, "end") * END;
+		else if (is_room_shaped(data->line))
 		{
-			free(line);
-			line = get_next_line(INPUT_FD);
-		}
-		return error("Error: first entry must be ants quantity:\n", 0, 0);
-	}
-	data->num_ants = ft_atoi(line);
-	free(line);
-	while (get_next_noncomment_line(INPUT_FD, &line))
-	{
-		if (!ft_strncmp(line, "##", 2)) // directive
-			modifier = !ft_strcmp(line + 2, "start") * START + !ft_strcmp(line + 2, "end") * END;
-		else if (is_room_shaped(line))
-		{
-			if (add_room(data, line, modifier))
-				return error(NULL, NULL, line);
+			add_room(data, modifier);
 			modifier = NONE;
 		}
 		else
 			break;
-		free(line);
+		zero_free(&data->line);
 	}
 	if (modifier)
-		return error("Error: invalid command usuage:\n", line, line);
+		error("Error: invalid command usuage:\n", data->line, data);
 	if (store_in_hash_table(data))
-		return error(NULL, NULL, NULL);
-	while (line && is_link_shaped(data, line))
+		error(NULL, NULL, data);
+	while (data->line)
 	{
-		free(line);
-		get_next_noncomment_line(INPUT_FD, &line);
+		if (!is_link_shaped(data, data->line))
+			safe_exit(data, 1);
+		zero_free(&data->line);
+		get_next_noncomment_line(INPUT_FD, data);
 	}
-	if (line)
-		return error("Error: invalid line:\n", line, line);
+	if (data->line)
+		error("Error: invalid line:\n", data->line, data);
 
 	return 0;
 }
 
 // gets the next nonempty line
-char *get_next_noncomment_line(int fd, char **line)
+char *get_next_noncomment_line(int fd, t_data *data)
 {
-	*line = get_next_line(fd);
+	data->line = get_next_line(fd);
 
-	while (*line && !ft_strncmp(*line, "#", 1) && ft_strncmp(*line, "##", 2))
+	while (data->line && !ft_strncmp(data->line, "#", 1) && ft_strncmp(data->line, "##", 2))
 	{
-		if (!ft_strncmp(*line, "\n", 1))
-			error("Error: empty line\n", *line, 0);
-		free(*line);
-		*line = get_next_line(fd);
+		if (!ft_strncmp(data->line, "\n", 1))
+			error("Error: empty line\n", data->line, data);
+		zero_free(&data->line);
+		data->line = get_next_line(fd);
 	}
-	if (*line)
+	if (data->line)
 	{
-		int len = ft_strlen(*line);
-		if (len > 0 && (*line)[len - 1] == '\n')
-			(*line)[len - 1] = 0;
+		int len = ft_strlen(data->line);
+		if (len > 0 && (data->line)[len - 1] == '\n')
+			(data->line)[len - 1] = 0;
 	}
-	return *line;
+	return data->line;
 }
 
 // room shaped line has shape "[name(string)] [x(uint)] [y(uint)]"
@@ -134,7 +128,7 @@ int is_link_shaped(t_data *data, char *line)
 	ft_free_tab((void **)names);
 
 	if (!room1 || !room2)
-		return error("Error: invalid link:\n", l, l);
+		error("Error: invalid link:\n", l, data);
 	int a = link_rooms(room1, room2);
 	int b = link_rooms(room2, room1);
 	return !(a && b);
@@ -142,17 +136,28 @@ int is_link_shaped(t_data *data, char *line)
 
 // adds a room to the data in temp_rooms
 // returns 1 if there is an error, else 0
-int add_room(t_data *data, char *line, uint modifier)
+int add_room(t_data *data, uint modifier)
 {
-	t_room *room = ft_calloc(1, sizeof(t_room));
+	t_room *room = safe_calloc(1, sizeof(t_room), data);
 
 	if (!room)
 		return 1;
 
-	room->name = ft_strndup(line, ft_strchr(line, ' ') - line);
-	room->x = ft_atoi(ft_strchr(line, ' '));
-	room->y = ft_atoi(ft_strrchr(line, ' '));
+	room->name = ft_strndup(data->line, ft_strchr(data->line, ' ') - data->line);
+	if (!room->name)
+	{
+		free(room);
+		error("Memory allocation failed", 0, data);
+	}
+	room->x = ft_atoi(ft_strchr(data->line, ' '));
+	room->y = ft_atoi(ft_strrchr(data->line, ' '));
 	room->edges = ft_calloc(10, sizeof(t_room *));
+	if (!room->edges)
+	{
+		free(room->name);
+		free(room);
+		error("Memory allocation failed", 0, data);
+	}
 	room->edge_cap = 10;
 
 	if (modifier == START)
@@ -166,7 +171,7 @@ int add_room(t_data *data, char *line, uint modifier)
 		data->temp_rooms = ft_realloc(data->temp_rooms, data->num_rooms * sizeof(t_room *), (data->temp_rooms_size * 2) * sizeof(t_room *));
 		data->temp_rooms_size *= 2;
 		if (!data->temp_rooms)
-			return 1;
+			error("Memory allocation failed", 0, data);
 	}
 	return 0;
 }

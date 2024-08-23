@@ -22,10 +22,12 @@ t_room *htable_get(t_data *data, char *name);
 int htable_add(t_data *data, t_room *room);
 float htable_load(t_data *data);
 // utils
-int error(char *msg, char *line, void *to_free);
+void error(char *msg, char *line, t_data *data);
 uint get_next_prime(uint n);
 void safe_exit(t_data *data, int code);
 void *safe_malloc(size_t size, t_data *data);
+void *safe_calloc(size_t count, size_t size, t_data *data);
+void zero_free(char **ptr);
 
 // prune
 int prune_path_simple(t_data *data, t_room *begin);

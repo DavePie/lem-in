@@ -175,9 +175,6 @@ void	print_data(t_data *data, int print_rooms, int print_edges, int print_paths)
 	ft_putendl_fd("end:", 1);
 	print_room(data->end, 0);
 
-	ft_putstr_fd("width: ", 1);
-	ft_putnbrendl_fd(data->width, 1);
-
 	ft_putstr_fd("num_rooms: ", 1);
 	ft_putnbrendl_fd(data->num_rooms, 1);
 

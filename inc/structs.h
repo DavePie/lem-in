@@ -57,13 +57,12 @@ typedef struct s_data
 
     t_room *start;
     t_room *end;
-    uint width; // maxium amount of parallel paths
 
     uint num_rooms;
     t_room **temp_rooms; // temporary array for parsing
     uint temp_rooms_size;
 
-    char **temp_links; // temporary array for parsing
+    char *line;
 
     uint hash_table_size;
     t_room **rooms; // hash table by name of rooms

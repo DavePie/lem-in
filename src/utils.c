@@ -1,15 +1,13 @@
 #include "lem-in.h"
 
 // sends error message with line if provided, frees a pointer if there is one and returns 1
-int error(char *msg, char *line, void *to_free)
+void error(char *msg, char *line, t_data *data)
 {
     if (msg)
         write(1, msg, ft_strlen(msg));
     if (line)
         write(1, line, ft_strlen(line));
-    if (to_free)
-        free(to_free);
-    return 1;
+    safe_exit(data, 1);
 }
 
 // get the next prime number after n
@@ -35,9 +33,23 @@ void safe_free(void *ptr)
         free(ptr);
 }
 
+void zero_free(char **ptr)
+{
+    if (ptr && *ptr)
+    {
+        free(*ptr);
+        *ptr = 0;
+    }
+}
+
 void safe_exit(t_data *data, int code)
 {
-    (void)data;
+    while (data->line)
+    {
+        zero_free(&data->line);
+        data->line = get_next_line(INPUT_FD);
+    }
+
     for (uint i = 0; i < data->new_paths.size; i++)
     {
         safe_free(data->new_paths.paths[i]->rooms);
@@ -66,10 +78,19 @@ void safe_exit(t_data *data, int code)
     exit(code);
 }
 
+void *safe_calloc(size_t count, size_t size, t_data *data)
+{
+    
+    void *ans = ft_calloc(count, size);
+    if (!ans)
+		error("Memory allocation failed", 0, data);
+    return ans;
+}
+
 void *safe_malloc(size_t size, t_data *data)
 {
     void *ans = malloc(size);
     if (!ans)
-        safe_exit(data, 1);
+		error("Memory allocation failed", 0, data);
     return ans;
 }
