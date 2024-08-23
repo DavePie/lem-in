@@ -14,7 +14,7 @@
 #include "get_next_line.h"
 #include "structs.h"
 
-int get_data(t_data *data);
+void get_data(t_data *data);
 // hash table
 int store_in_hash_table(t_data *data);
 ulong hash(char *str);

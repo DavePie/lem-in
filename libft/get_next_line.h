@@ -15,6 +15,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <stdlib.h>
+# define BUFFER_SIZE 4096
 
 typedef struct s_buffers
 {

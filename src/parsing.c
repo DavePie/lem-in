@@ -2,13 +2,13 @@
 
 int is_room_shaped(char *line);
 int is_link_shaped(t_data *data, char *line);
-int add_room(t_data *data, uint modifier);
-int link_rooms(t_room *room1, t_room *room2);
+void add_room(t_data *data, uint modifier);
+void link_rooms(t_room *room1, t_room *room2, t_data *data);
 char *get_next_noncomment_line(int fd, t_data *data);
 
 // read the input and store the data (num ants, rooms and edges)
 // returns 1 if there is an error, else 0
-int get_data(t_data *data)
+void get_data(t_data *data)
 {
 	data->line = NULL;
 	uint modifier = NONE;
@@ -43,14 +43,12 @@ int get_data(t_data *data)
 	while (data->line)
 	{
 		if (!is_link_shaped(data, data->line))
-			safe_exit(data, 1);
+			error("Invalid link", data->line, data);
 		zero_free(&data->line);
 		get_next_noncomment_line(INPUT_FD, data);
 	}
 	if (data->line)
 		error("Error: invalid line:\n", data->line, data);
-
-	return 0;
 }
 
 // gets the next nonempty line
@@ -122,28 +120,21 @@ int is_link_shaped(t_data *data, char *line)
 		return 0;
 	char **names = ft_split(l, '-');
 	if (!names)
-		return 1;
+		error("Error: failed allocate", 0, data);
 	t_room *room1 = htable_get(data, names[0]);
 	t_room *room2 = htable_get(data, names[1]);
 	ft_free_tab((void **)names);
-
 	if (!room1 || !room2)
-		error("Error: invalid link:\n", l, data);
-	int a = link_rooms(room1, room2);
-	if (a)
 		return 0;
-	int b = link_rooms(room2, room1);
-	return !(a && b);
+	link_rooms(room1, room2, data);
+	link_rooms(room2, room1, data);
 }
 
 // adds a room to the data in temp_rooms
 // returns 1 if there is an error, else 0
-int add_room(t_data *data, uint modifier)
+void add_room(t_data *data, uint modifier)
 {
 	t_room *room = safe_calloc(1, sizeof(t_room), data);
-
-	if (!room)
-		return 1;
 
 	room->name = ft_strndup(data->line, ft_strchr(data->line, ' ') - data->line);
 	if (!room->name)
@@ -175,24 +166,21 @@ int add_room(t_data *data, uint modifier)
 		if (!data->temp_rooms)
 			error("Memory allocation failed", 0, data);
 	}
-	return 0;
 }
 
 // link two rooms
-// returns 1 if there is an error, else 0
-int link_rooms(t_room *room1, t_room *room2)
+void link_rooms(t_room *room1, t_room *room2, t_data *data)
 {
 	if (room1->num_edges == room1->edge_cap)
 	{
 		room1->edges = ft_realloc(room1->edges, room1->num_edges * sizeof(t_room *), (room1->edge_cap * 2) * sizeof(t_room *));
 		room1->edge_cap *= 2;
 		if (!room1->edges)
-			return 1;
+			error("Error: failed reallocate", NULL, data);
 	}
 	// check if the room is already linked
 	for (uint i = 0; i < room1->num_edges; i++)
 		if (room1->edges[i] == room2)
-			error("Error: duplicate link\n", NULL, NULL);
+			error("Error: duplicate link\n", NULL, data);
 	room1->edges[room1->num_edges++] = room2;
-	return 0;
 }

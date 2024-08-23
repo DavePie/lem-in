@@ -44,11 +44,8 @@ void zero_free(char **ptr)
 
 void safe_exit(t_data *data, int code)
 {
-    while (data->line)
-    {
-        zero_free(&data->line);
-        data->line = get_next_line(INPUT_FD);
-    }
+
+    zero_free(&data->line);
 
     for (uint i = 0; i < data->new_paths.size; i++)
     {
