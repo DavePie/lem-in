@@ -1,4 +1,5 @@
-const pane = new Tweakpane.Pane();
+	
+	const pane = new Tweakpane.Pane();
 import { Rooms, Links, Ant } from './AntFarm.js';
 
 // GUI  component to input and validate the ant farm
@@ -162,6 +163,8 @@ export class PlaybackController {
 	constructor(simState, simulation) {
 		this.simState = simState;
 		this.sim = simulation;
+
+		console.log('creating playback controller with simState:', this.simState, 'and simulation:', this.sim);
 
 		this.container = document.createElement('div');
 		this.container.id = 'playback-container';

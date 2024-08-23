@@ -7,13 +7,13 @@ export class Simulation {
 		this.onUpdate = onUpdate;
 		this.param = param;
 		this.gui = gui;
-		console.log('variables check in simulation:', this.visualizer, this.simState, this.onUpdate, this.param, this.gui);
+		console.log('variables check in simulation:', '\nvisualizer:', this.visualizer, '\nsimState', this.simState,'\nonUpdate', this.onUpdate, '\nparam', this.param, 'gui', this.gui);
 	}
 
 	run() {
 		if (this.simState.is_playing && this.simState.step < this.simState.len) {
 			this.simState.step++;
-			this.onUpdate(this.simState.step);
+			this.onUpdate(this.simState.step, this.simState);
 			this.guiUpdate();
 		} else if (this.simState.step === this.simState.len) {
 			this.simState.is_playing = false;
@@ -25,7 +25,7 @@ export class Simulation {
 	stepBack() {
 		if (this.simState.step > 0 && !this.simState.is_playing) {
 			this.simState.step--;
-			this.onUpdate(this.simState.step);
+			this.onUpdate(this.simState.step, this.simState);
 			this.guiUpdate();
 			console.log('Step Backward, step:', this.simState.step);
 		}
@@ -41,7 +41,7 @@ export class Simulation {
 	stepForward() {
 		if (this.simState.step < this.simState.len && !this.simState.is_playing) {
 			this.simState.step++;
-			this.onUpdate(this.simState.step);
+			this.onUpdate(this.simState.step, this.simState);
 			this.guiUpdate();
 			console.log('Step Forward, step:', this.simState.step);
 		}
@@ -50,14 +50,14 @@ export class Simulation {
 	restart() {
 		this.simState.step = 0;
 		this.simState.is_playing = false;
-		this.onUpdate(this.simState.step);
+		this.onUpdate(this.simState.step, this.simState);
 		this.guiUpdate();
 		console.log('Simulation restarted');
 	}
 
 	guiUpdate() {
-		this.gui.playbackController.stepInput.disabled = simState.is_playing;
-		this.gui.playbackController.speedInput.disabled = simState.is_playing;
+		this.gui.playbackController.stepInput.disabled = this.simState.is_playing;
+		this.gui.playbackController.speedInput.disabled = this.simState.is_playing;
 		this.gui.playbackController.stepInput.refresh();
 	}
 }

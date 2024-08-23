@@ -30,6 +30,8 @@ ulong hash(char *str)
 // returns room if found, else NULL
 t_room *htable_get(t_data *data, char *name)
 {
+	if (!name || !data->hash_table_size)
+		return NULL;
 	ulong key = hash(name) % data->hash_table_size;
 
 	while (data->rooms[key])
@@ -49,8 +51,9 @@ int htable_add(t_data *data, t_room *room)
 
 	while (data->rooms[key])
 	{
-		if (!ft_strcmp(data->rooms[key]->name, room->name))
-			return 1;
+		if (!ft_strcmp(data->rooms[key]->name, room->name)) {
+			error("Error: duplacate room name\n", NULL, data);
+		}
 		key = (key + 1) % data->hash_table_size;
 	}
 	data->rooms[key] = room;

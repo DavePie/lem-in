@@ -190,14 +190,14 @@ export class AntFarmVisualizer {
 
     updateLinksColor() {
         // Mise à jour des couleurs des liens traversés par les fourmis
-        for (let ant of this.ants) {
-            const currentLink = this.links.linkList.find(link =>
-                (link.room1 === this.rooms.getPos(ant.currentRoom) && link.room2 === this.rooms.getPos(ant.targetRoom)) ||
-                (link.room2 === this.rooms.getPos(ant.currentRoom) && link.room1 === this.rooms.getPos(ant.targetRoom))
-            );
+        // for (let ant of this.ants) {
+        //     const currentLink = this.links.linkList.find(link =>
+        //         (link.room1 === this.rooms.getPos(ant.currentRoom) && link.room2 === this.rooms.getPos(ant.targetRoom)) ||
+        //         (link.room2 === this.rooms.getPos(ant.currentRoom) && link.room1 === this.rooms.getPos(ant.targetRoom))
+        //     );
 
-            if (currentLink && currentLink.color.join(',') === '255,255,255')
-                currentLink.color = ant.color;
-        }
+        //     if (currentLink && currentLink.color.join(',') === '255,255,255')
+        //         currentLink.color = '255,0,0'.split(',');
+        // }
     }
 }

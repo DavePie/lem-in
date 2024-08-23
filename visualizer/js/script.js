@@ -28,15 +28,12 @@ let playbackController = null;
 let visualizer = null;
 
 
-//
-//   Updaters
-//
 // Function to update the simulation
 function updateSimulation(step, simState) {
 	// Add logic to apply changes to the rendered ant farm
 	console.log('Simulation updated to step:', step);
 	if (visualizer){
-		if (is_playing){
+		if (simState.is_playing){
 			visualizer.animateToStep(step - 1, step);
 		} else {
 			visualizer.moveToStep(step);
@@ -44,8 +41,8 @@ function updateSimulation(step, simState) {
 	}
 }
 
-const canvas = document.createElement('canvas');
 
+const canvas = document.createElement('canvas');
 // Définir la taille du canvas (optionnel, sinon utilise la taille par défaut)
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -68,7 +65,7 @@ gui.simulationForm = new SimulationForm(param, (isValid) => {
 			}
 			console.log('number of steps:', param.ants.steps);
 			console.log('positions tab:', param.ants.positions);
-			gui.playbackController = new PlaybackController(simState, simulation);
+			gui.playbackController = new PlaybackController(simState, gui.simulation);
 		}
 		simState.is_playing = false;
 		simState.step = 0;
@@ -76,6 +73,7 @@ gui.simulationForm = new SimulationForm(param, (isValid) => {
 		
 		param.simulation = new Simulation(visualizer, simState, updateSimulation, param, gui);
 
+		gui.playbackController.sim = param.simulation;
 		gui.playbackController.stepInput.disabled = simState.is_playing;
 		gui.playbackController.speedInput.disabled = simState.is_playing;
 		gui.playbackController.stepInput.refresh();
@@ -83,11 +81,8 @@ gui.simulationForm = new SimulationForm(param, (isValid) => {
 });
 
 
-// Simulation orchestrator
-param.simulation = null;
-
 // Main loop
 setInterval(() => {
-	if (param.simulation && param.simState.is_playing)
+	if (param.simulation && simState.is_playing)
 		param.simulation.run();
 }, 1000);

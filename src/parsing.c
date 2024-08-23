@@ -136,6 +136,8 @@ int is_link_shaped(t_data *data, char *line)
 	if (!room1 || !room2)
 		return error("Error: invalid link:\n", l, l);
 	int a = link_rooms(room1, room2);
+	if (a)
+		return 0;
 	int b = link_rooms(room2, room1);
 	return !(a && b);
 }
@@ -182,6 +184,10 @@ int link_rooms(t_room *room1, t_room *room2)
 		if (!room1->edges)
 			return 1;
 	}
+	// check if the room is already linked
+	for (uint i = 0; i < room1->num_edges; i++)
+		if (room1->edges[i] == room2)
+			error("Error: duplicate link\n", NULL, NULL);
 	room1->edges[room1->num_edges++] = room2;
 	return 0;
 }
