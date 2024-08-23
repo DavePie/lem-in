@@ -1,126 +1,203 @@
-let rooms = [];
-let links = [];
-let ants = [];
-let zoomLevel = 1;
-let offsetX = 0;
-let offsetY = 0;
-let speed = 0.005;
+export class AntFarmVisualizer {
+    constructor(canvas, param) {
+        this.canvas = canvas;
+        this.rooms = param.rooms;
+        this.links = param.links;
+        this.ants = param.ants;
 
-function setup() {
-    createCanvas(windowWidth, windowHeight);
-    
-    // Exemple de salles
-    rooms = [
-        {name: 'A', x: 100, y: 50},
-        {name: 'B', x: 300, y: 150},
-        {name: 'C', x: 500, y: 300},
-		{name: 'D', x: 700, y: 150},
-		{name: 'E', x: 900, y: 800},
-		{name: 'F', x: 1100, y: 150},
-		{name: 'G', x: 1300, y: 500},
-    ];
+        console.log('inside visualizer rooms:', param.rooms.pos);
+        console.log('inside visualizer links:', param.links.linkList);
+        console.log('inside visualizer ants:', param.ants.positions);
 
-    // Exemple de liens
-    links = [
-        {room1: 'A', room2: 'B', color: [255, 255, 255]},
-        {room1: 'B', room2: 'C', color: [255, 255, 255]},
-		{room1: 'C', room2: 'D', color: [255, 255, 255]},
-		{room1: 'D', room2: 'E', color: [255, 255, 255]},
-		{room1: 'E', room2: 'D', color: [255, 255, 255]},
-		{room1: 'F', room2: 'A', color: [255, 255, 255]},
-		{room1: 'G', room2: 'F', color: [255, 255, 255]},
-		{room1: 'F', room2: 'D', color: [255, 255, 255]},
+        this.zoomLevel = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
 
-    ];
-
-    // Exemple de fourmis
-    ants = [
-        {id: 1, currentRoom: 'A', targetRoom: 'B', progress: 0, color: [255, 0, 0]},
-        {id: 2, currentRoom: 'B', targetRoom: 'C', progress: 0, color: [0, 255, 0]},
-		{id: 3, currentRoom: 'C', targetRoom: 'D', progress: 0, color: [0, 0, 255]},
-    ];
-}
-
-function draw() {
-    background(0);
-
-    translate(offsetX, offsetY);
-    scale(zoomLevel);
-
-    drawLinks();
-    drawRooms();
-    drawAnts();
-
-    animateAnts();
-}
-
-function drawRooms() {
-    fill(200);
-    noStroke();
-    for (let room of rooms) {
-        ellipse(room.x, room.y, 30, 30);
+        this.setup();
     }
-}
 
-function drawLinks() {
-    for (let link of links) {
-        stroke(link.color);
-        strokeWeight(5);
-        let room1 = rooms.find(r => r.name === link.room1);
-        let room2 = rooms.find(r => r.name === link.room2);
-        line(room1.x, room1.y, room2.x, room2.y);
+    setup() {
+        this.calculateDefaultZoom();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        this.canvas.addEventListener('wheel', (e) => this.mouseWheel(e));
+        this.canvas.addEventListener('mousedown', (e) => this.mouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.mouseDrag(e));
+        this.canvas.addEventListener('mouseup', () => this.mouseUp());
+
+        this.isDragging = false;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
+
+        this.ctx = this.canvas.getContext('2d');
+        this.draw();
     }
-}
 
-function drawAnts() {
-    noStroke();
-    for (let ant of ants) {
-        fill(ant.color);
-        let room1 = rooms.find(r => r.name === ant.currentRoom);
-        let room2 = rooms.find(r => r.name === ant.targetRoom);
-        let antX = lerp(room1.x, room2.x, ant.progress);
-        let antY = lerp(room1.y, room2.y, ant.progress);
-        ellipse(antX, antY, 20, 20);
+    calculateDefaultZoom() {
+        // print type of rooms.pos
+        console.log(`rooms.pos type: ${typeof this.rooms.pos}`);
+        const minX = Math.min(...this.rooms.pos.map(pos => pos[0]));
+        const maxX = Math.max(...this.rooms.pos.map(pos => pos[0]));
+        const minY = Math.min(...this.rooms.pos.map(pos => pos[1]));
+        const maxY = Math.max(...this.rooms.pos.map(pos => pos[1]));
+
+        const mapWidth = maxX - minX;
+        const mapHeight = maxY - minY;
+
+        this.zoomLevel = Math.min(this.canvas.width / mapWidth, this.canvas.height / mapHeight) * 0.9;
+        this.offsetX = -minX * this.zoomLevel + (this.canvas.width - mapWidth * this.zoomLevel) / 2;
+        this.offsetY = -minY * this.zoomLevel + (this.canvas.height - mapHeight * this.zoomLevel) / 2;
     }
-}
 
-function animateAnts() {
-    for (let ant of ants) {
-        ant.progress += speed; // Incrémente la progression de l'animation
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.calculateDefaultZoom();
+        this.draw();
+    }
 
-        if (ant.progress >= 1) {
-            // Met à jour la couleur du lien une fois qu'une fourmi le traverse
-            let link = links.find(l => (l.room1 === ant.currentRoom && l.room2 === ant.targetRoom) ||
-                                       (l.room1 === ant.targetRoom && l.room2 === ant.currentRoom));
-            if (link.color[0] === 255 && link.color[1] === 255 && link.color[2] === 255) {
-                link.color = ant.color; // Change la couleur du lien à la couleur de la fourmi
-            }
+    mouseWheel(event) {
+        const zoomFactor = 1.05;
+        const zoom = event.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
 
-            // Déplace la fourmi à la salle cible et redéfinis la cible
-            ant.currentRoom = ant.targetRoom;
-            ant.targetRoom = getNextTargetRoom(ant.currentRoom);
-            ant.progress = 0;
+        const mouseXWorld = (event.offsetX - this.offsetX) / this.zoomLevel;
+        const mouseYWorld = (event.offsetY - this.offsetY) / this.zoomLevel;
+
+        this.zoomLevel *= zoom;
+        this.zoomLevel = Math.max(this.zoomLevel, 0.25);
+        this.zoomLevel = Math.min(this.zoomLevel, 3);
+
+        this.offsetX = event.offsetX - mouseXWorld * this.zoomLevel;
+        this.offsetY = event.offsetY - mouseYWorld * this.zoomLevel;
+
+        this.draw();
+    }
+
+    mouseDown(event) {
+        this.isDragging = true;
+        this.lastMouseX = event.clientX;
+        this.lastMouseY = event.clientY;
+    }
+
+    mouseDrag(event) {
+        if (this.isDragging) {
+            const dx = event.clientX - this.lastMouseX;
+            const dy = event.clientY - this.lastMouseY;
+
+            this.offsetX += dx;
+            this.offsetY += dy;
+
+            this.lastMouseX = event.clientX;
+            this.lastMouseY = event.clientY;
+
+            this.draw();
         }
     }
-}
 
-function getNextTargetRoom(currentRoom) {
-    // Exemple simple, peut être modifié pour des logiques plus complexes
-    let possibleLinks = links.filter(l => l.room1 === currentRoom || l.room2 === currentRoom);
-    let nextLink = random(possibleLinks);
-    return nextLink.room1 === currentRoom ? nextLink.room2 : nextLink.room1;
-}
+    mouseUp() {
+        this.isDragging = false;
+    }
 
-function mouseDragged() {
-    offsetX += movedX;
-    offsetY += movedY;
-}
+    draw() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-function mouseWheel(event) {
-    zoomLevel += event.deltaY * -0.001;
-    zoomLevel = constrain(zoomLevel, 0.5, 3);
-}
+        ctx.save();
+        ctx.translate(this.offsetX, this.offsetY);
+        ctx.scale(this.zoomLevel, this.zoomLevel);
 
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+        this.drawLinks();
+        this.drawRooms();
+        this.drawAnts();
+
+        ctx.restore();
+    }
+
+    drawRooms() {
+        const ctx = this.ctx;
+        ctx.fillStyle = 'rgb(200, 200, 200)';
+        for (let [name, pos] of Object.entries(this.rooms.rooms)) {
+            ctx.beginPath();
+            ctx.arc(pos[0], pos[1], 15, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    }
+
+    drawLinks() {
+        const ctx = this.ctx;
+        ctx.lineWidth = 5;
+        for (let link of this.links.linkList) {
+            const pos1 = link.room1;
+            const pos2 = link.room2;
+
+            ctx.strokeStyle = `rgb(${link.color.join(',')})`;
+            ctx.beginPath();
+            ctx.moveTo(pos1[0], pos1[1]);
+            ctx.lineTo(pos2[0], pos2[1]);
+            ctx.stroke();
+        }
+    }
+
+    drawAnts() {
+        const ctx = this.ctx;
+        for (let ant of this.ants.positions) {
+            const currentRoom = this.rooms.getPos(ant.currentRoom);
+            const targetRoom = this.rooms.getPos(ant.targetRoom);
+
+            if (currentRoom && targetRoom) {
+                const x = currentRoom[0] + (targetRoom[0] - currentRoom[0]) * ant.progress;
+                const y = currentRoom[1] + (targetRoom[1] - currentRoom[1]) * ant.progress;
+
+                ctx.fillStyle = `rgb(${ant.color.join(',')})`;
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+    }
+
+    animateToStep(step_a, step_b, duration = 1000) {
+        let progress = 0;
+        const startTime = performance.now();
+        const stepDirection = Math.sign(step_b - step_a);
+        const stepDelta = Math.abs(step_b - step_a);
+
+        const animate = (time) => {
+            progress = (time - startTime) / duration;
+
+            if (progress >= 1)
+                progress = 1;
+
+            this.updateAntsPosition(step_a, step_a + stepDirection * progress * stepDelta);
+            this.draw();
+
+            if (progress < 1)
+                requestAnimationFrame(animate);
+            else if (step_b === step_a + stepDirection)
+                this.updateLinksColor();
+        };
+        requestAnimationFrame(animate);
+    }
+
+    moveToStep(step_id) {
+        this.updateAntsPosition(step_id, step_id);
+        this.draw();
+    }
+
+    updateAntsPosition(step_a, step_b) {
+        // Mise à jour des positions des fourmis entre step_a et step_b
+        // Implémentation à adapter en fonction de la structure des données de positions de fourmis
+    }
+
+    updateLinksColor() {
+        // Mise à jour des couleurs des liens traversés par les fourmis
+        for (let ant of this.ants) {
+            const currentLink = this.links.linkList.find(link =>
+                (link.room1 === this.rooms.getPos(ant.currentRoom) && link.room2 === this.rooms.getPos(ant.targetRoom)) ||
+                (link.room2 === this.rooms.getPos(ant.currentRoom) && link.room1 === this.rooms.getPos(ant.targetRoom))
+            );
+
+            if (currentLink && currentLink.color.join(',') === '255,255,255')
+                currentLink.color = ant.color;
+        }
+    }
 }

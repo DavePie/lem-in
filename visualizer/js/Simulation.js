@@ -1,18 +1,23 @@
+import { AntFarmVisualizer } from './visualization.js';
+
 export class Simulation {
-	constructor(simState, onUpdate, onGuiUpdate) {
+	constructor(visualizer, simState, onUpdate, param, gui) {
+		this.visualizer = visualizer;
 		this.simState = simState;
 		this.onUpdate = onUpdate;
-		this.onGuiUpdate = onGuiUpdate; // Fonction de rappel pour mettre à jour le GUI
+		this.param = param;
+		this.gui = gui;
+		console.log('variables check in simulation:', this.visualizer, this.simState, this.onUpdate, this.param, this.gui);
 	}
 
 	run() {
 		if (this.simState.is_playing && this.simState.step < this.simState.len) {
 			this.simState.step++;
-			this.onUpdate(this.simState.step); // Mise à jour de la simulation
-			this.onGuiUpdate(); // Appeler la fonction pour mettre à jour le GUI
+			this.onUpdate(this.simState.step);
+			this.guiUpdate();
 		} else if (this.simState.step === this.simState.len) {
 			this.simState.is_playing = false;
-			this.onGuiUpdate(); // Appeler la fonction pour mettre à jour le GUI
+			this.guiUpdate();
 			console.log('Simulation ended');
 		}
 	}
@@ -20,23 +25,24 @@ export class Simulation {
 	stepBack() {
 		if (this.simState.step > 0 && !this.simState.is_playing) {
 			this.simState.step--;
-			this.onUpdate(this.simState.step); // Mise à jour de la simulation
-			this.onGuiUpdate(); // Appeler la fonction pour mettre à jour le GUI
+			this.onUpdate(this.simState.step);
+			this.guiUpdate();
 			console.log('Step Backward, step:', this.simState.step);
 		}
 	}
 
 	playPause() {
 		this.simState.is_playing = !this.simState.is_playing;
-		this.onGuiUpdate(); // Appeler la fonction pour mettre à jour le GUI
+		console.log('in play gui is:', this.gui);
+		this.guiUpdate();
 		console.log('Play/Pause, is_playing:', this.simState.is_playing);
 	}
 
 	stepForward() {
 		if (this.simState.step < this.simState.len && !this.simState.is_playing) {
 			this.simState.step++;
-			this.onUpdate(this.simState.step); // Mise à jour de la simulation
-			this.onGuiUpdate(); // Appeler la fonction pour mettre à jour le GUI
+			this.onUpdate(this.simState.step);
+			this.guiUpdate();
 			console.log('Step Forward, step:', this.simState.step);
 		}
 	}
@@ -44,8 +50,14 @@ export class Simulation {
 	restart() {
 		this.simState.step = 0;
 		this.simState.is_playing = false;
-		this.onUpdate(this.simState.step); // Mise à jour de la simulation
-		this.onGuiUpdate(); // Appeler la fonction pour mettre à jour le GUI
+		this.onUpdate(this.simState.step);
+		this.guiUpdate();
 		console.log('Simulation restarted');
+	}
+
+	guiUpdate() {
+		this.gui.playbackController.stepInput.disabled = simState.is_playing;
+		this.gui.playbackController.speedInput.disabled = simState.is_playing;
+		this.gui.playbackController.stepInput.refresh();
 	}
 }
