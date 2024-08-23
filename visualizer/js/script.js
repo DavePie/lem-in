@@ -19,6 +19,11 @@ const param = {
 	ants: null,
 	sim: null,
 };
+const gui = {
+	antFarmForm: null,
+	simulationForm: null,
+	playbackController: null,
+};
 let playbackController = null;
 let visualizer = null;
 
@@ -26,11 +31,6 @@ let visualizer = null;
 //
 //   Updaters
 //
-function updateGui() {
-	playbackController.stepInput.disabled = simState.is_playing;
-	playbackController.speedInput.disabled = simState.is_playing;
-	playbackController.stepInput.refresh();
-}
 // Function to update the simulation
 function updateSimulation(step, simState) {
 	// Add logic to apply changes to the rendered ant farm
@@ -56,33 +56,38 @@ document.body.appendChild(canvas);
 //
 //   GUI components setup
 //
-const antFarmForm = new AntFarmForm(param, (isValid) => {
-	simulationForm.button.disabled = !isValid;
+gui.antFarmForm = new AntFarmForm(param, (isValid) => {
+	gui.simulationForm.button.disabled = !isValid;
 });
-const simulationForm = new SimulationForm(param, (isValid) => {
+gui.simulationForm = new SimulationForm(param, (isValid) => {
 	if (isValid && param.simValid) {
 		if (!playbackController)  {
+			if (!visualizer && param.ants){
+				visualizer = new AntFarmVisualizer(canvas, param);
+				simState.len = param.ants.steps;
+			}
 			console.log('number of steps:', param.ants.steps);
-			playbackController = new PlaybackController(simState, simulation);
-		}
-		if (!visualizer){
-			visualizer = new AntFarmVisualizer(canvas, param);
-			simState.len = param.ants.positions[0].length;
-			updateGui();
+			console.log('positions tab:', param.ants.positions);
+			gui.playbackController = new PlaybackController(simState, simulation);
 		}
 		simState.is_playing = false;
 		simState.step = 0;
 		simState.speed = 1;
-		updateGui();	
+		
+		param.simulation = new Simulation(visualizer, simState, updateSimulation, param, gui);
+
+		gui.playbackController.stepInput.disabled = simState.is_playing;
+		gui.playbackController.speedInput.disabled = simState.is_playing;
+		gui.playbackController.stepInput.refresh();
 	}
 });
 
 
 // Simulation orchestrator
-const simulation = new Simulation(simState, updateSimulation, updateGui);
+param.simulation = null;
 
 // Main loop
 setInterval(() => {
-	if (simState.is_playing)
-		simulation.run();
+	if (param.simulation && param.simState.is_playing)
+		param.simulation.run();
 }, 1000);

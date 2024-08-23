@@ -66,7 +66,6 @@ export class Ant {
         let startPos = rooms.getPos(rooms.start);
         this.lastRooms = Array(numAnts).fill(rooms.start); // last room visited by each ant to verify the link exists
         this.positions = Array.from({ length: numAnts }, () => [startPos.slice()]); // positions of each ant at each step
-        console.log('positions:', this.positions);
     }
 
     addStep(moves) {
@@ -91,7 +90,7 @@ export class Ant {
             if (!this.links.check(previousRoom, roomName))
                 throw new Error(`Link between '${previousRoom}' and '${roomName}' does not exist.`);
 
-            console.log('antId:', antId, 'moving from room:', this.lastRooms[antId], 'to room:', roomName, 'pos:', this.rooms.getPos(roomName));
+            // console.log('antId:', antId, 'moving from room:', this.lastRooms[antId], 'to room:', roomName, 'pos:', this.rooms.getPos(roomName));
 
             // Update the ant's position for the current step
             this.positions[antId][this.steps] = this.rooms.getPos(roomName).slice();

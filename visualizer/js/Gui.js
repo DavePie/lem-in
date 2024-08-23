@@ -140,9 +140,6 @@ export class SimulationForm {
 		let steps = input.trim().split('\n');
 	
 		for (let i = 0; i < steps.length; i++) {
-			console.log('steps:', steps[i], 'steps in ant:', this.params.ants.steps, 'ants array length:', this.params.ants.positions[0].length);
-			console.log('ants tab:', this.params.ants.positions);
-
 			let step = steps[i].trim();
 			if (step.length === 0) continue;
 	

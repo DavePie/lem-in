@@ -6,6 +6,8 @@ export class AntFarmVisualizer {
         this.ants = param.ants;
 
         console.log('inside visualizer rooms:', param.rooms.pos);
+        console.log('inside visualizer links:', param.links.linkList);
+        console.log('inside visualizer ants:', param.ants.positions);
 
         this.zoomLevel = 1;
         this.offsetX = 0;
