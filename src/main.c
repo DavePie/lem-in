@@ -9,8 +9,7 @@ int main()
     t_data data;
     ft_bzero(&data, sizeof(t_data));
 
-    if (get_data(&data))
-        safe_exit(&data, 1);
+    get_data(&data);
     if (!data.start || !data.end)
     {
         printf("Invalid map (missing start/end)\n");
