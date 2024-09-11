@@ -1,53 +1,53 @@
 body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-    background-color: #000000;
+	font-family: Arial, sans-serif;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	background-color: #000000;
 }
 
 #gui {
-    background-color: #000000;
-    color: #ffffff;
-    padding: 20px;
-    margin: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	background-color: #000000;
+	color: #ffffff;
+	padding: 20px;
+	margin: 20px;
+	border-radius: 8px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 textarea {
-    width: 100%;
-    margin-bottom: 10px;
+	width: 100%;
+	margin-bottom: 10px;
 }
 
 button {
-    margin-right: 10px;
+	margin-right: 10px;
 }
 
 #playback-container {
-    position: absolute;
-    bottom: 50px; /* Ajuster la position verticale */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 400px; /* Largeur augmentée de la barre de lecture */
+	position: absolute;
+	bottom: 50px; /* Ajuster la position verticale */
+	left: 50%;
+	transform: translateX(-50%);
+	width: 400px; /* Largeur augmentée de la barre de lecture */
 }
 #playback-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
+	display: flex;
+	justify-content: space-between;
+	margin-top: 10px;
 }
 .playback-button {
-    flex: 1;
-    margin: 0 5px;
-    text-align: center;
-    padding: 10px; /* Ajouter du padding pour un meilleur look */
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #2a2a2a;
+	flex: 1;
+	margin: 0 5px;
+	text-align: center;
+	padding: 10px; /* Ajouter du padding pour un meilleur look */
+	cursor: pointer;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background-color: #2a2a2a;
 }
 .playback-button:hover {
-    background-color: #2b2b2b;
+	background-color: #2b2b2b;
 }

@@ -1,203 +1,237 @@
 export class AntFarmVisualizer {
-    constructor(canvas, param) {
-        this.canvas = canvas;
-        this.rooms = param.rooms;
-        this.links = param.links;
-        this.ants = param.ants;
+	constructor(param) {
+		this.param = param;
+		this.simState = param.simState;
+		this.canvas = param.canvas;
+		this.ctx = this.canvas.getContext('2d');
+		this.rooms = param.rooms;
+		this.links = param.links;
+		this.ants = param.ants;
 
-        console.log('inside visualizer rooms:', param.rooms.pos);
-        console.log('inside visualizer links:', param.links.linkList);
-        console.log('inside visualizer ants:', param.ants.positions);
+		this.margin = 50;
+		this.scale = 1;
+		this.offsetX = 0;
+		this.offsetY = 0;
+		this.dragging = false;
+		this.lastMousePos = { x: 0, y: 0 };
 
-        this.zoomLevel = 1;
-        this.offsetX = 0;
-        this.offsetY = 0;
+		this.setupEventListeners();
+		this.resize();
+		window.addEventListener('resize', () => this.resize());
+		this.updateStep();
+	}
 
-        this.setup();
-    }
+	setupEventListeners() {
+		// scroll button to zoom in and out
+		this.canvas.addEventListener('wheel', (event) => this.handleZoom(event));
 
-    setup() {
-        this.calculateDefaultZoom();
-        window.addEventListener('resize', () => this.resizeCanvas());
-        this.canvas.addEventListener('wheel', (e) => this.mouseWheel(e));
-        this.canvas.addEventListener('mousedown', (e) => this.mouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.mouseDrag(e));
-        this.canvas.addEventListener('mouseup', () => this.mouseUp());
+		// Clic and drag to move the view
+		this.canvas.addEventListener('mousedown', (event) => this.handleMouseDown(event));
+		this.canvas.addEventListener('mousemove', (event) => this.handleMouseMove(event));
+		this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+		this.canvas.addEventListener('mouseleave', () => this.handleMouseUp());
+	}
 
-        this.isDragging = false;
-        this.lastMouseX = 0;
-        this.lastMouseY = 0;
+	handleZoom(event) {
+		event.preventDefault();
+		const zoomFactor = 1.1;
+		const zoom = event.deltaY < 0 ? zoomFactor : 1 / zoomFactor;
+		const { offsetX, offsetY } = event;
 
-        this.ctx = this.canvas.getContext('2d');
-        this.draw();
-    }
+		// update the new scale and offset
+		this.scale *= zoom;
+		this.offsetX = offsetX - (offsetX - this.offsetX) * zoom;
+		this.offsetY = offsetY - (offsetY - this.offsetY) * zoom;
+		// redraw
+		this.updateStep();
+	}
 
-    calculateDefaultZoom() {
-        // print type of rooms.pos
-        console.log(`rooms.pos type: ${typeof this.rooms.pos}`);
-        const minX = Math.min(...this.rooms.pos.map(pos => pos[0]));
-        const maxX = Math.max(...this.rooms.pos.map(pos => pos[0]));
-        const minY = Math.min(...this.rooms.pos.map(pos => pos[1]));
-        const maxY = Math.max(...this.rooms.pos.map(pos => pos[1]));
+	handleMouseDown(event) {
+		this.dragging = true;
+		this.lastMousePos = { x: event.clientX, y: event.clientY };
+	}
 
-        const mapWidth = maxX - minX;
-        const mapHeight = maxY - minY;
+	handleMouseMove(event) {
+		if (this.dragging) {
+			const dx = event.clientX - this.lastMousePos.x;
+			const dy = event.clientY - this.lastMousePos.y;
+			// update the offset
+			this.offsetX += dx;
+			this.offsetY += dy;
+			this.lastMousePos = { x: event.clientX, y: event.clientY };
+			// redraw
+			this.updateStep();
+		}
+	}
 
-        this.zoomLevel = Math.min(this.canvas.width / mapWidth, this.canvas.height / mapHeight) * 0.9;
-        this.offsetX = -minX * this.zoomLevel + (this.canvas.width - mapWidth * this.zoomLevel) / 2;
-        this.offsetY = -minY * this.zoomLevel + (this.canvas.height - mapHeight * this.zoomLevel) / 2;
-    }
+	handleMouseUp() {
+		this.dragging = false;
+	}
 
-    resizeCanvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-        this.calculateDefaultZoom();
-        this.draw();
-    }
+	resize() {
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight;
 
-    mouseWheel(event) {
-        const zoomFactor = 1.05;
-        const zoom = event.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
+		this.calculateScaling();
+		this.updateStep();
+	}
 
-        const mouseXWorld = (event.offsetX - this.offsetX) / this.zoomLevel;
-        const mouseYWorld = (event.offsetY - this.offsetY) / this.zoomLevel;
+	calculateScaling() {
+		const positions = this.rooms.getPositionsTab();
+		const xCoords = positions.map(pos => pos[0]);
+		const yCoords = positions.map(pos => pos[1]);
 
-        this.zoomLevel *= zoom;
-        this.zoomLevel = Math.max(this.zoomLevel, 0.25);
-        this.zoomLevel = Math.min(this.zoomLevel, 3);
+		const minX = Math.min(...xCoords);
+		const maxX = Math.max(...xCoords);
+		const minY = Math.min(...yCoords);
+		const maxY = Math.max(...yCoords);
 
-        this.offsetX = event.offsetX - mouseXWorld * this.zoomLevel;
-        this.offsetY = event.offsetY - mouseYWorld * this.zoomLevel;
+		this.scale = Math.min(
+			(this.canvas.width - 2 * this.margin) / (maxX - minX),
+			(this.canvas.height - 2 * this.margin) / (maxY - minY)
+		);
+		this.offsetX = (this.canvas.width - (maxX - minX) * this.scale) / 2 - minX * this.scale;
+		this.offsetY = (this.canvas.height - (maxY - minY) * this.scale) / 2 - minY * this.scale;
 
-        this.draw();
-    }
+		let minDistance = Infinity;
+		for (let i = 0; i < positions.length; i++) {
+			for (let j = i + 1; j < positions.length; j++) {
+				const dist = Math.hypot(
+					positions[i][0] - positions[j][0],
+					positions[i][1] - positions[j][1]
+				);
+				if (dist < minDistance)
+					minDistance = dist;
+			}
+		}
+		this.roomDiameter = (minDistance / 3) * this.scale;
+	}
 
-    mouseDown(event) {
-        this.isDragging = true;
-        this.lastMouseX = event.clientX;
-        this.lastMouseY = event.clientY;
-    }
+	clearScreen() {
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		this.ctx.fillStyle = 'black';
+		this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+	}
 
-    mouseDrag(event) {
-        if (this.isDragging) {
-            const dx = event.clientX - this.lastMouseX;
-            const dy = event.clientY - this.lastMouseY;
+	draw() {
+		this.clearScreen();
+		this.drawLinks();
+		this.drawRooms();
+	}
 
-            this.offsetX += dx;
-            this.offsetY += dy;
+	drawRooms() {
+		for (const key in this.rooms.rooms) {
+			const room = this.rooms.rooms[key];
+			const [x, y] = this.transform(room.pos);
 
-            this.lastMouseX = event.clientX;
-            this.lastMouseY = event.clientY;
+			if (room.isSpecial === "start" || room.isSpecial === "end") {
+				// outer white band
+				this.ctx.beginPath();
+				this.ctx.arc(x, y, this.roomDiameter * 0.65, 0, 2 * Math.PI);
+				this.ctx.fillStyle = 'white';
+				this.ctx.fill();
+				// middle black band
+				this.ctx.beginPath();
+				this.ctx.arc(x, y, this.roomDiameter * 0.55, 0, 2 * Math.PI);
+				this.ctx.fillStyle = 'black';
+				this.ctx.fill();
+			}
+			// room circle
+			this.ctx.beginPath();
+			this.ctx.arc(x, y, this.roomDiameter / 2, 0, 2 * Math.PI);
+			this.ctx.fillStyle = 'white';
+			this.ctx.fill();
+		}
+	}
 
-            this.draw();
-        }
-    }
+	drawLinks() {
+		const links = this.links.getLinksTab();
+		links.forEach(link => {
+			const [room1, room2, color] = link;
+			const [x1, y1] = this.transform(room1);
+			const [x2, y2] = this.transform(room2);
 
-    mouseUp() {
-        this.isDragging = false;
-    }
+			this.ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 
-    draw() {
-        const ctx = this.ctx;
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			const angle = Math.atan2(y2 - y1, x2 - x1);
+			const dist = Math.hypot(x2 - x1, y2 - y1);
+			const thickness = this.roomDiameter / 6; // width
 
-        ctx.save();
-        ctx.translate(this.offsetX, this.offsetY);
-        ctx.scale(this.zoomLevel, this.zoomLevel);
+			this.ctx.save();
+			this.ctx.translate(x1, y1);
+			this.ctx.rotate(angle);
+			this.ctx.fillRect(0, -thickness / 2, dist, thickness);
+			this.ctx.restore();
+		});
+	}
 
-        this.drawLinks();
-        this.drawRooms();
-        this.drawAnts();
+	// Update to current step
+	updateStep() {
+		this.clearScreen();
+		this.drawLinks();
+		this.drawRooms();
+		const step = this.simState.step;
+		for (let i = 0; i < this.ants.num; i++) {
+			const room = this.ants.getPosition(i + 1, step);
+			const [x, y] = this.transform(room.pos);
 
-        ctx.restore();
-    }
+			this.ctx.fillStyle = `rgb(${this.ants.colors[i][0]}, ${this.ants.colors[i][1]}, ${this.ants.colors[i][2]})`;
+			this.ctx.beginPath();
+			this.ctx.arc(x, y, this.roomDiameter / 4, 0, 2 * Math.PI);
+			this.ctx.fill();
+		}
+	}
 
-    drawRooms() {
-        const ctx = this.ctx;
-        ctx.fillStyle = 'rgb(200, 200, 200)';
-        for (let [name, pos] of Object.entries(this.rooms.rooms)) {
-            ctx.beginPath();
-            ctx.arc(pos[0], pos[1], 15, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-    }
+	// Animate ants translation from step - 1 to step
+	animateToStep() {
+		return new Promise((resolve) => {
+			const previousStep = this.simState.step - 1;
+			const nextStep = this.simState.step;
+			const duration = 1000 / this.simState.speed;
+			let startTime;
 
-    drawLinks() {
-        const ctx = this.ctx;
-        ctx.lineWidth = 5;
-        for (let link of this.links.linkList) {
-            const pos1 = link.room1;
-            const pos2 = link.room2;
+			const animate = (timestamp) => {
+				if (!startTime) startTime = timestamp;
+				const progress = Math.min((timestamp - startTime) / duration, 1);
 
-            ctx.strokeStyle = `rgb(${link.color.join(',')})`;
-            ctx.beginPath();
-            ctx.moveTo(pos1[0], pos1[1]);
-            ctx.lineTo(pos2[0], pos2[1]);
-            ctx.stroke();
-        }
-    }
+				this.clearScreen();
+				this.drawLinks();
+				this.drawRooms();
 
-    drawAnts() {
-        const ctx = this.ctx;
-        for (let ant of this.ants.positions) {
-            const currentRoom = this.rooms.getPos(ant.currentRoom);
-            const targetRoom = this.rooms.getPos(ant.targetRoom);
+				for (let i = 0; i < this.ants.num; i++) {
+					const startRoom = this.ants.getPosition(i + 1, previousStep);
+					const endRoom = this.ants.getPosition(i + 1, nextStep);
+					// change the color of the link the ant used if was white
+					if (startRoom != endRoom && this.links.getLink(startRoom, endRoom).color[0] === 255)
+						this.links.getLink(startRoom, endRoom).color = this.ants.colors[i];
 
-            if (currentRoom && targetRoom) {
-                const x = currentRoom[0] + (targetRoom[0] - currentRoom[0]) * ant.progress;
-                const y = currentRoom[1] + (targetRoom[1] - currentRoom[1]) * ant.progress;
+					const [startX, startY] = this.transform(startRoom.pos);
+					const [endX, endY] = this.transform(endRoom.pos);
+					const currentX = startX + (endX - startX) * progress;
+					const currentY = startY + (endY - startY) * progress;
 
-                ctx.fillStyle = `rgb(${ant.color.join(',')})`;
-                ctx.beginPath();
-                ctx.arc(x, y, 10, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        }
-    }
+					this.ctx.fillStyle = `rgb(${this.ants.colors[i][0]}, ${this.ants.colors[i][1]}, ${this.ants.colors[i][2]})`;
+					this.ctx.beginPath();
+					this.ctx.arc(currentX, currentY, this.roomDiameter / 4, 0, 2 * Math.PI);
+					this.ctx.fill();
+				}
 
-    animateToStep(step_a, step_b, duration = 1000) {
-        let progress = 0;
-        const startTime = performance.now();
-        const stepDirection = Math.sign(step_b - step_a);
-        const stepDelta = Math.abs(step_b - step_a);
+				if (progress < 1)
+					requestAnimationFrame(animate);
+				else {
+					this.updateStep();
+					resolve();
+				}
+			};
+			requestAnimationFrame(animate);
+		});
+	}
 
-        const animate = (time) => {
-            progress = (time - startTime) / duration;
-
-            if (progress >= 1)
-                progress = 1;
-
-            this.updateAntsPosition(step_a, step_a + stepDirection * progress * stepDelta);
-            this.draw();
-
-            if (progress < 1)
-                requestAnimationFrame(animate);
-            else if (step_b === step_a + stepDirection)
-                this.updateLinksColor();
-        };
-        requestAnimationFrame(animate);
-    }
-
-    moveToStep(step_id) {
-        this.updateAntsPosition(step_id, step_id);
-        this.draw();
-    }
-
-    updateAntsPosition(step_a, step_b) {
-        // Mise à jour des positions des fourmis entre step_a et step_b
-        // Implémentation à adapter en fonction de la structure des données de positions de fourmis
-    }
-
-    updateLinksColor() {
-        // Mise à jour des couleurs des liens traversés par les fourmis
-        // for (let ant of this.ants) {
-        //     const currentLink = this.links.linkList.find(link =>
-        //         (link.room1 === this.rooms.getPos(ant.currentRoom) && link.room2 === this.rooms.getPos(ant.targetRoom)) ||
-        //         (link.room2 === this.rooms.getPos(ant.currentRoom) && link.room1 === this.rooms.getPos(ant.targetRoom))
-        //     );
-
-        //     if (currentLink && currentLink.color.join(',') === '255,255,255')
-        //         currentLink.color = '255,0,0'.split(',');
-        // }
-    }
+	// Transform a position from the simulation to a position on the canvas
+	transform(pos) {
+		return [
+			(pos[0] * this.scale) + this.offsetX,
+			(pos[1] * this.scale) + this.offsetY
+		];
+	}
 }

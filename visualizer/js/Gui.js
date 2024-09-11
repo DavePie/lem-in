@@ -1,6 +1,7 @@
 	
 	const pane = new Tweakpane.Pane();
-import { Rooms, Links, Ant } from './AntFarm.js';
+import {Room, Link, Rooms, Links, Ants } from './AntFarm.js';
+import { AntFarmVisualizer } from './visualization.js';
 
 // GUI  component to input and validate the ant farm
 // located on top right
@@ -9,34 +10,53 @@ export class AntFarmForm {
 	constructor(params, onValidate) {
 		this.params = params;
 		this.onValidate = onValidate;
-
 		this.folder = pane.addFolder({title: 'AntFarm Settings', expanded: true});
-
 		this.textArea = document.createElement('textarea');
 		this.textArea.rows = 10;
 		this.textArea.cols = 50;
 		this.textArea.placeholder = 'Enter AntFarm configuration here...';
 		this.textArea.style.width = '95%';
 		this.folder.element.appendChild(this.textArea);
-
 		this.folder.addButton({ title: 'Validate ant farm' }).on('click', () => {this.validate();});
 	}
 
 	validate() {
+		if (this.params.vis)
+			this.params.vis.clearScreen();
+		this.resetParams();
 
 		try{
 			[this.params.rooms, this.params.links, this.params.ants] = this.parseInput(this.getInputValue());
 		} catch (error) {
 			this.params.farmValid = false;
 			console.error(error);
+			this.params.popup.show(error.message);
 		}
+
 		if (this.params.rooms && this.params.links && this.params.ants)
 			this.params.farmValid = true;
-		else
-			this.params.farmValid = false;
 		console.log('AntFarm validated:', this.params.farmValid);
 		if (this.onValidate)
 			this.onValidate(this.params.farmValid);
+		if (this.params.farmValid)
+			this.params.vis = new AntFarmVisualizer(this.params);
+	}
+
+	resetParams() {
+		this.params.farmValid = false;
+		this.params.simValid = false;;
+
+		if (this.params.gui.playbackController) {
+			console.log('Removing playback controller');
+			this.params.gui.playbackController.container.remove();
+			this.params.gui.playbackController = null;
+		}
+
+		this.params.rooms = null;
+		this.params.links = null;
+		this.params.ants = null;
+		this.params.sim = null;
+		this.params.vis = null;
 	}
 
 	getInputValue() {
@@ -45,59 +65,60 @@ export class AntFarmForm {
 
 	parseInput(input) {
 		const lines = input.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-		
 		const rooms = new Rooms();
 		const links = new Links();
-		
 		let numAnts;
-		let parsingRooms = false;
-		let parsingLinks = false;
 		let preproc = false;
+		let firstInsruction = true;
 
 		if (lines.length === 0)
 			throw new Error('No input provided.');
 	
+		let numLines = 0;
 		for (let line of lines) {
-			if (line.startsWith('#')) {
-				if (line.startsWith('##')) {
-					const directive = line.slice(2).toLowerCase();
-					if (directive === 'start' || directive === 'end') {
-						preproc = directive;
-						parsingRooms = true;
-						parsingLinks = false;
-					} else
-						throw new Error(`Directive ${directive} is not recognized.`);
-				}
+			numLines++;
+			// If starts with # but not ##, skip the line
+			if (line.startsWith('#') && !line.startsWith('##'))
 				continue;
-			}
-	
-			if (!parsingRooms && !parsingLinks) {
-				numAnts = parseInt(line, 10);
-				parsingRooms = true;
-			} else if (parsingRooms) {
-				if (line.includes('-')) {
-					parsingRooms = false;
-					parsingLinks = true;
-				} else {
-					const [name, x, y] = line.split(' ');
-
-					rooms.add(name, [parseInt(x), parseInt(y)], preproc);
-				}
-				preproc = false;
-			}
-	
-			if (parsingLinks && line.includes('-')) {
-				const [room1, room2] = line.split('-');
-				const pos1 = rooms.getPos(room1);
-				const pos2 = rooms.getPos(room2);
-				if (pos1 && pos2)
-					links.add(room1, room2, pos1, pos2);
+			// If starts with ##, it's a preprocessor command, if not "start" or "end" after, throw error
+			else if (line.startsWith('##')) {
+				if (line === '##start' || line === '##end')
+					preproc = line.slice(2);
 				else
-					throw new Error(`One of the rooms in the link ${line} does not exist.`);
+					throw new Error('Invalid preprocessor command.\n Line ' + numLines + ': ' + line);
+			}
+			// If line shaped like "[int]" and is the first instruction, it's the number of ants
+			else if (line.match(/^\d+$/) && firstInsruction) {
+				if (preproc !== false)
+					throw new Error('Preprocessor command before number of ants.\n Line ' + numLines + ': ' + line);
+				numAnts = parseInt(line);
+				firstInsruction = false;
+			}
+			else if (firstInsruction)
+				throw new Error('First instruction must be number of ants.');
+			// If line shaped like "[string] [int] [int]", it's a room
+			else if (line.match(/^\w+ \d+ \d+$/)) {
+				const [name, x, y] = line.split(' ');
+				rooms.addRoom(name, parseInt(x), parseInt(y), preproc);
 				preproc = false;
 			}
+			// If line shaped like "[string]-[string]", it's a link
+			else if (line.match(/^\w+-\w+$/)) {
+				if (preproc !== false)
+					throw new Error('Preprocessor command before link.\n Line ' + numLines + ': ' + line);
+				const [room1, room2] = line.split('-');
+				if (!rooms.exists(room1) || !rooms.exists(room2))
+					throw new Error('Link between non-existing rooms.\n Line ' + numLines + ': ' + line);
+				links.addLink(rooms.rooms[room1], rooms.rooms[room2]);
+			}
+			else
+				throw new Error('Invalid instruction.\n Line ' + numLines + ': ' + line);
 		}
-		const ants = new Ant(numAnts, rooms, links);
+		if (firstInsruction)
+			throw new Error('Empty input.');
+		else if (!rooms.start || !rooms.end)
+			throw new Error('No start or end room.');
+		const ants = new Ants(numAnts, rooms.start);
 
 		return [rooms, links, ants];
 	}
@@ -111,22 +132,25 @@ export class SimulationForm {
 	constructor(params, onValidate) {
 		this.params = params;
 		this.onValidate = onValidate;
-
 		this.folder = pane.addFolder({title: 'Simulation Settings', expanded: true});
-
 		this.textArea = document.createElement('textarea');
 		this.textArea.rows = 10;
 		this.textArea.cols = 50;
 		this.textArea.placeholder = 'Enter Simulation configuration here...';
 		this.textArea.style.width = '95%';
 		this.folder.element.appendChild(this.textArea);
-
 		this.button = this.folder.addButton({ title: 'Validate Simulation' }).on('click', () => {this.validate();});
 	}
 
 	validate() {
 		if (this.params.farmValid) {
-			this.params.simValid = this.parseinput(this.getInputValue());
+			try {
+				this.parseinput(this.getInputValue());
+				this.params.simValid = true;
+			} catch (error) {
+				this.params.simValid = false;
+				console.error(error);
+			}
 			console.log('Simulation validated:', this.params.simValid);
 			if (this.onValidate)
 				this.onValidate(this.params.simValid);
@@ -139,19 +163,15 @@ export class SimulationForm {
 
 	parseinput(input) {	
 		let steps = input.trim().split('\n');
-	
+
 		for (let i = 0; i < steps.length; i++) {
 			let step = steps[i].trim();
-			if (step.length === 0) continue;
-	
-			let result = this.params.ants.addStep(step.split(' '));
-	
-			if (typeof result === 'string') {
-				console.error(result);
-				return false;
-			}
+			if (step.length === 0)
+				throw new Error('Empty step.');
+			this.params.ants.addStep(step, i + 1, this.params.rooms, this.params.links);
 		}
-		return true;
+		if (steps.length === 0)
+			throw new Error('No steps provided.');
 	}
 }
 
@@ -160,16 +180,13 @@ export class SimulationForm {
 // includes buttons to play, pause, step forward, step backward and restart
 // also include a playback progress slider and a speed slider to control transitions speed
 export class PlaybackController {
-	constructor(simState, simulation) {
+	constructor(simState, simulation, params) {
 		this.simState = simState;
 		this.sim = simulation;
-
-		console.log('creating playback controller with simState:', this.simState, 'and simulation:', this.sim);
-
+		this.params = params;
 		this.container = document.createElement('div');
 		this.container.id = 'playback-container';
 		document.body.appendChild(this.container);
-
 		this.pane = new Tweakpane.Pane({container: this.container});
 		// playback slider
 		this.stepInput = this.pane.addInput(this.simState, 'step', {
@@ -178,6 +195,9 @@ export class PlaybackController {
 			step: 1,
 			label: 'Position',
 			disabled: this.simState.is_playing,
+		});
+		this.stepInput.on('change', () => {
+			this.params.vis.updateStep();
 		});
 		// speed slider
 		this.speedInput = this.pane.addInput(this.simState, 'speed', {
@@ -193,7 +213,7 @@ export class PlaybackController {
 		this.buttonContainer = document.createElement('div');
 		this.buttonContainer.id = 'playback-buttons';
 		this.container.appendChild(this.buttonContainer);
-
+		// buttons
 		['<i class="fa fa-step-backward"></i>',
 		'<i class="fa fa-play"></i><i class="fa fa-pause"></i>',
 		'<i class="fa fa-step-forward"></i>',
@@ -207,15 +227,29 @@ export class PlaybackController {
 	}
 
 	playbackAction(index) {
+		if (this.params.in_anim) {
+			this.params.button_buff = index;
+			return;
+		}
 		switch (index) {
 			case 0:
 				this.sim.stepBack(); break;
 			case 1:
-				this.sim.playPause(); break;
+				this.sim.playPause();
+				if (this.simState.is_playing)
+					this.sim.run();
+				break;
 			case 2:
 				this.sim.stepForward(); break;
 			case 3:
 				this.sim.restart(); break;
 		}
+		this.update();
+	}
+
+	update() {
+		this.stepInput.disabled = this.simState.is_playing;
+		this.speedInput.disabled = this.simState.is_playing;
+		this.stepInput.refresh();
 	}
 }
