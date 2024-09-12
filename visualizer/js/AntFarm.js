@@ -73,12 +73,12 @@ export class Links {
 	}
 
 	// Add a link
-	addLink(room1, room2, color) {
+	addLink(room1, room2) {
 		const key = room1.name < room2.name
 			? `${room1.name}${this.splitKey}${room2.name}`
 			: `${room2.name}${this.splitKey}${room1.name}`;
 		if (!(key in this.links))
-			this.links[key] = new Link(room1, room2, color);
+			this.links[key] = new Link(room1, room2);
 		else
 			throw new Error(`Link between rooms ${room1.name} and ${room2.name} already exists.`);
 	}
