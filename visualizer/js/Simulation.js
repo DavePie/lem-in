@@ -9,20 +9,22 @@ export class Simulation {
 	}
 
 	async run() {
-		while (this.simState.is_playing && this.simState.step < this.simState.len) {
+		while (this.simState.is_playing && this.simState.step < this.simState.len && this.param.gui.playbackController) {
 			this.simState.step++;
 			this.param.in_anim = true;
 			await this.param.vis.animateToStep();
 			this.param.in_anim = false;
 			// Do button action if one was blocked by animation
-			if (this.param.button_buff !== -1) {
+			if (this.param.button_buff !== -1 && this.gui.playbackController) {
 				this.gui.playbackController.playbackAction(this.param.button_buff);
 				this.param.button_buff = -1;
 			}
-			this.gui.playbackController.update();
+			if (this.gui.playbackController)
+				this.gui.playbackController.update();
 		}
 		this.simState.is_playing = false;
-		this.gui.playbackController.update();
+		if (this.gui.playbackController)
+			this.gui.playbackController.update();
 	}
 
 	stepBack() {

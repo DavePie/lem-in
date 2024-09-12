@@ -48,10 +48,13 @@ re: fclean all
 run: all
 	./$(NAME)
 
+visualizer:
+	@cd visualizer && serve
+
 test: all
 	cat maps/subject3.map | ./$(NAME)
 
 leaks: all
 	valgrind --leak-check=full ./$(NAME)
 
-.PHONY: clean fclean all re run test leaks
+.PHONY: clean fclean all re run test leaks visualizer

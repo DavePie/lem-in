@@ -3,6 +3,10 @@
 import {Room, Link, Rooms, Links, Ants } from './AntFarm.js';
 import { AntFarmVisualizer } from './visualization.js';
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // GUI  component to input and validate the ant farm
 // located on top right
 // is in charge to get the ant farm, parse it and validate it
@@ -20,9 +24,15 @@ export class AntFarmForm {
 		this.folder.addButton({ title: 'Validate ant farm' }).on('click', () => {this.validate();});
 	}
 
-	validate() {
+	async validate() {
 		if (this.params.vis)
 			this.params.vis.clearScreen();
+		if (this.params.gui.playbackController) {
+			this.params.gui.playbackController.container.remove();
+			delete this.params.gui.playbackController;
+			this.params.gui.playbackController = null;
+		}
+		const timeToSleep = this.params.simState.in_anim ? (1000 / this.params.simState.speed) : 0;
 		this.resetParams();
 
 		try{
@@ -32,10 +42,10 @@ export class AntFarmForm {
 			console.error(error);
 			this.params.popup.show(error.message);
 		}
+		await sleep(timeToSleep);
 
 		if (this.params.rooms && this.params.links && this.params.ants)
 			this.params.farmValid = true;
-		console.log('AntFarm validated:', this.params.farmValid);
 		if (this.onValidate)
 			this.onValidate(this.params.farmValid);
 		if (this.params.farmValid)
@@ -45,18 +55,27 @@ export class AntFarmForm {
 	resetParams() {
 		this.params.farmValid = false;
 		this.params.simValid = false;;
-
 		if (this.params.gui.playbackController) {
 			console.log('Removing playback controller');
 			this.params.gui.playbackController.container.remove();
+			delete this.params.gui.playbackController;
 			this.params.gui.playbackController = null;
 		}
-
+		delete this.params.rooms;
 		this.params.rooms = null;
+		delete this.params.links;
 		this.params.links = null;
+		delete this.params.ants;
 		this.params.ants = null;
+		delete this.params.sim;
 		this.params.sim = null;
+		delete this.params.vis;
 		this.params.vis = null;
+		this.params.simState.step = 0;
+		this.params.simState.speed = 1;
+		this.params.simState.len = 1;
+		this.params.simState.is_playing = false;
+		this.params.simState.in_anim = false;
 	}
 
 	getInputValue() {
@@ -236,7 +255,7 @@ export class PlaybackController {
 				this.sim.stepBack(); break;
 			case 1:
 				this.sim.playPause();
-				if (this.simState.is_playing)
+				if (this.simState.is_playing && this.params.gui.playbackController)
 					this.sim.run();
 				break;
 			case 2:

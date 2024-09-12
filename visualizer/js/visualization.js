@@ -100,7 +100,7 @@ export class AntFarmVisualizer {
 					positions[i][0] - positions[j][0],
 					positions[i][1] - positions[j][1]
 				);
-				if (dist < minDistance)
+				if (dist < minDistance && dist !== 0)
 					minDistance = dist;
 			}
 		}
