@@ -25,7 +25,7 @@ void get_data(t_data *data)
 	if (temp < 1)
 		error("Error: invalid number of ants\n", 0, data);
 	data->num_ants = temp;
-	
+
 	zero_free(&data->line);
 	while (get_next_noncomment_line(INPUT_FD, data))
 	{

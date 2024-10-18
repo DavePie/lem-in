@@ -51,5 +51,5 @@ void simulate(t_data *data)
     //     print_path(paths[i]);
     // }
     free(ants);
-    // printf("# turns: %d\n", path_temp->turns);
+    printf("# turns: %d\n", path_temp->turns);
 }

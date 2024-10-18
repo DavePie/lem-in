@@ -64,7 +64,7 @@ void safe_exit(t_data *data, int code)
         safe_free(data->temp_rooms[i]->name);
         safe_free(data->temp_rooms[i]->flow);
         safe_free(data->temp_rooms[i]->edges);
-
+        safe_free(data->temp_rooms[i]->edge_visit);
         safe_free(data->temp_rooms[i]);
     }
     safe_free(data->temp_rooms);
@@ -77,10 +77,10 @@ void safe_exit(t_data *data, int code)
 
 void *safe_calloc(size_t count, size_t size, t_data *data)
 {
-    
+
     void *ans = ft_calloc(count, size);
     if (!ans)
-		error("Memory allocation failed", 0, data);
+        error("Memory allocation failed", 0, data);
     return ans;
 }
 
@@ -88,6 +88,6 @@ void *safe_malloc(size_t size, t_data *data)
 {
     void *ans = malloc(size);
     if (!ans)
-		error("Memory allocation failed", 0, data);
+        error("Memory allocation failed", 0, data);
     return ans;
 }

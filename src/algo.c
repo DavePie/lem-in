@@ -174,6 +174,14 @@ void find_new_paths(t_data *data, t_paths *n_path)
     }
 }
 
+int contains(t_path *p, t_room *r)
+{
+    for (uint k = 0; k < p->size; k++)
+        if (r == p->rooms[k])
+            return 1;
+    return 0;
+}
+
 t_path *find_flow_path(t_data *data, MinHeap *h, int *visit_id)
 {
     while (h->size > 0)
@@ -190,10 +198,11 @@ t_path *find_flow_path(t_data *data, MinHeap *h, int *visit_id)
                 update_flow(p);
                 return p;
             }
-            if ((edge->visited != *visit_id && last->flow[i] < 1) && (last->flow[i] == -1 || (p->has_backtrack || last->visited == *visit_id)))
+            if ((edge->visited != *visit_id && last->flow[i] < 1) && (last->flow[i] == -1 || (p->has_backtrack || last->visited == *visit_id)) &&  !contains(p, edge))//&& last->edge_visit[i] != *visit_id)
             {
-                if (edge->visited != -1 && edge->visited != *visit_id)
+                if (edge->visited != -1)
                     edge->visited = *visit_id;
+                last->edge_visit[i] = *visit_id;
                 p->rooms[p->size] = edge;
                 insert(h, init_path(p->rooms, p->size + 1, p->cap + 1, last->visited != *visit_id), data);
             }

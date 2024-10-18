@@ -13,7 +13,8 @@ typedef struct s_room
     uint num_edges;
     uint edge_cap;
     struct s_room **edges; // rooms connected to this room
-    int *flow;			   // coresponds to edge of same index
+    int *edge_visit;
+    int *flow; // coresponds to edge of same index
     int visited;
     int level;
 } t_room;
@@ -49,7 +50,6 @@ typedef struct
     t_path *path;
     uint index;
 } Ant;
-
 
 typedef struct s_data
 {

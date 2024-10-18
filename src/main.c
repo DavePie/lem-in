@@ -21,7 +21,8 @@ int main()
 
     start = clock();
     prune_dead_ends(&data);
-
+    for (uint i = 0; i < data.num_rooms; i++)
+        data.temp_rooms[i]->edge_visit = safe_malloc((data.temp_rooms[i]->num_edges + 1) * sizeof(int), &data);
     printf("#took %f seconds to prune dead ends\n", ((double)(clock() - start)) / CLOCKS_PER_SEC);
     printf("#Orignal nodes: %d\n", data.num_rooms);
     // printf("loop nodes removed %d\n", prune_path_simple(&data, data.start->edges[0]));
@@ -43,4 +44,3 @@ int main()
     safe_exit(&data, 0);
     return 0;
 }
-
